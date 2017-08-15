@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>16.1.0</version>
+		<relativePath />
+	</parent>
+
+	<groupId>ch.epfl.biop</groupId>
+	<version>1.0.0-SNAPSHOT</version>
+
+	<name>JACoP_B</name>
+	<url>http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:jacop_2.0:just_another_colocalization_plugin:start</url>
+	<inceptionYear>2009</inceptionYear>
+	<organization>
+		<name>BioImaging And Optics Platform (BIOP)</name>
+		<url>http://biop.epfl.ch</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>GNU General Public License v3+</name>
+			<url>http://www.gnu.org/licenses/gpl.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>cordelieres</id>
+			<name>Fabrice P Cordelières</name>
+			<url>https://www.linkedin.com/in/fabrice-cordeli%C3%A8res-ab364256/?ppe=1</url>
+			<roles>
+				<role>founder</role>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>tomka</id>
+			<name>Susanne Bolte</name>
+			<url>http://www.ibps.upmc.fr/fr/IBPS/annuaire/126-Susanne-Bolte</url>
+			<roles>
+				<role>founder</role>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>oburri</id>
+			<name>Olivier Burri</name>
+			<url>http://biop.epfl.ch/INFO_Facility.html#staff</url>
+			<roles>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>guiet</id>
+			<name>Romain Guiet</name>
+			<url>http://biop.epfl.ch/INFO_Facility.html#staff</url>
+			<roles>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+			</roles>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Olivier Burri</name>
+			<url>http://biop.epfl.ch/INFO_Facility.html#staff</url>
+			<roles><role>developper</role></roles>
+			<properties><id>oburri</id></properties>
+		</contributor>
+		<contributor>
+			<name>Romain Guiet</name>
+			<url>http://biop.epfl.ch/INFO_Facility.html#staff</url>
+			<roles><role>developper</role></roles>
+			<properties><id>guiet</id></properties>
+		</contributor>
+	</contributors>
+
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
+
+	<scm>
+		<connection>scm:git:git://c4science.ch/source/ijp-jacop-b</connection>
+		<developerConnection>scm:git://c4science.ch/source/ijp-jacop-b</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://c4science.ch/source/ijp-jacop-b</url>
+	</scm>
+	<issueManagement>
+		<system>none</system>
+		<url>https://google.com</url>
+	</issueManagement>
+	<ciManagement>
+		<system>none</system>
+		<url>https://google.com</url>
+	</ciManagement>
+
+	<properties>
+		<license.licenseName>gpl_v3</license.licenseName>
+		<license.copyrightOwners>Susanne Bolte, Fabrice P. Cordelières, Olivier Burri</license.copyrightOwners>
+		<imagej.app.directory>C:/Fiji/</imagej.app.directory>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<!-- Fiji dependencies -->
+
+		<!-- ImageJ dependencies -->
+
+		<!-- ImgLib2 dependencies -->
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-ij</artifactId>
+		</dependency>
+
+		<!-- Third party dependencies -->
+
+	</dependencies>
+	<artifactId>JACoP_B</artifactId>
+	<description>An update to the JACoP Plugin that helps in the management of ROIs, Z sections and helps generate cleaner reports</description>
+</project>
