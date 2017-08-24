@@ -1,3 +1,5 @@
+package ch.epfl.biop.coloc.utils;
+
 /*  JACoP: "Just Another Colocalization Plugin..." v1, 13/02/06
     Fabrice P Cordelieres, fabrice.cordelieres at curie.u-psud.fr
     Susanne Bolte, Susanne.bolte@isv.cnrs-gif.fr
@@ -22,15 +24,19 @@
  *
 */
 
-package ch.epfl.biop.coloc.utils;
-
 import ij.*;
 import ij.gui.*;
 import ij.ImagePlus.*;
 import ij.measure.*;
+import ij.plugin.ChannelSplitter;
+import ij.plugin.RGBStackMerge;
+import ij.plugin.Thresholder;
+import ij.plugin.ZProjector;
 import ij.process.*;
 
 import java.awt.*;
+
+import fiji.threshold.Auto_Threshold;
 
 /**
  *
@@ -44,48 +50,137 @@ public class ImageColocalizer {
     double Amean, Bmean;
     Calibration cal, micronCal;
     Counter3D countA, countB;
+    ResultsTable rt; 
+    
     
     //Values for stats
     boolean doThat;
     double sumA, sumB, sumAB, sumsqrA, Aarraymean, Barraymean;
     
+    // OB: Add output for fluorogram ICQs and the likes to be separated from the actuall processing (avoid .show())
+    private Plot fluorogram_plot, icq_plot, costes_plot, cff_plot;
+    
+    // OB: Add output for Costes Mask
+    private ImagePlus costesMask;
+	private Plot ica_a_plot;
+	private Plot ica_b_plot;
+	private ImagePlus costes_rand;
+	private Plot costes_rand_plot;
+	private ImagePlus centers_img;
+	private ImagePlus coinc_img;
+    
+	// OB: ROI Handling
+	private Roi roi=null;
+    private Color roiColor = Color.white;
+    String roiName="";
+	// OB: Get the images
+	private ImagePlus impA, impB;
+	
+	// OB: Keep the Thresholds
+	private int thrA, thrB;
+	
     /** Creates a new instance of ImageColocalizer */
-    public ImageColocalizer(ImagePlus ipA, ImagePlus ipB, Calibration cal) {
-        this.width=ipA.getWidth();
-        this.height=ipA.getHeight();
-        this.nbSlices=ipA.getNSlices();
-        this.depth=ipA.getBitDepth();
+    
+    /** Creates a new instance of ImageColocalizer */
+    public ImageColocalizer(ImagePlus ipA, ImagePlus ipB) {
+        setup(ipA, ipB, new Calibration());
+    }
+    
+    public ImageColocalizer(ImagePlus imp, int channelA, int channelB) {
+		Roi roi = imp.getRoi();
+		imp.deleteRoi();
+		ImagePlus[] channels = ChannelSplitter.split(imp);
+		
+		if(roi != null) {
+			channels[channelA-1].setRoi(roi);
+			channels[channelB-1].setRoi(roi);
+		}
+		setup(channels[channelA-1], channels[channelB-1], imp.getCalibration());
+		
+    }
+    
+    
+    
+	public void setup(ImagePlus oipA, ImagePlus oipB, Calibration cal) {
+    	// Add functionality to handle ROIs
+    	// If either image has a ROI, start by clearing the pixels outside of the ROI, and use the ROI name in the image names
+    	if (oipA.getRoi() != null || oipB.getRoi() != null) {
+    		roi = (oipA.getRoi() != null ? oipA.getRoi() : oipB.getRoi());
+    		
+    		roiName = roi.getName();
+    		if (roiName == null) {
+    			roiName = "ROI";
+    		}
+    		oipA.deleteRoi();
+    		oipB.deleteRoi();
+    		
+    		impA = oipA.duplicate();
+    		impB = oipB.duplicate();
+    		
+    		oipA.setRoi(roi);
+    		oipB.setRoi(roi);
+    		
+    		// Clear outside for both
+    		for(int i = 1; i<=impA.getNSlices(); i++) {
+    			impA.getStack().getProcessor(i).fillOutside(roi);
+    			impB.getStack().getProcessor(i).fillOutside(roi);
+    		}
+    		// Set the title of the images
+    		impA.setTitle("("+roiName+")-"+oipA.getTitle());
+    		impB.setTitle("("+roiName+")-"+oipB.getTitle());
+    		
+    	} else {
+    		impA = oipA;
+    		impB = oipB;
+    	}
+    	
+    	this.width=impA.getWidth();
+        this.height=impA.getHeight();
+        this.nbSlices=impA.getNSlices();
+        this.depth=impA.getBitDepth();
         
-        if (this.width!=ipB.getWidth() || this.height!=ipB.getHeight() || this.nbSlices!=ipB.getNSlices() || this.depth!=ipB.getBitDepth()){
+        if (this.width!=impB.getWidth() || this.height!=impB.getHeight() || this.nbSlices!=impB.getNSlices() || this.depth!=impB.getBitDepth()){
             IJ.error("ImageColocalizer expects both images to have the same size and depth");
             return;
         }
         this.length=this.width*this.height*this.nbSlices;
         this.A=new int[this.length];
         this.B=new int[this.length];
-        this.titleA=ipA.getTitle();
-        this.titleB=ipB.getTitle();
+        this.titleA=impA.getTitle();
+        this.titleB=impB.getTitle();
         this.cal=cal;
         this.micronCal=(Calibration) cal.clone();
         
         this.micronCal.pixelDepth/=1000;
         this.micronCal.pixelHeight/=1000;
         this.micronCal.pixelWidth/=1000;
-        this.micronCal.setUnit("�m");
+        this.micronCal.setUnit("um");
         
-        buildArray(ipA, ipB);
+        buildArray(impA, impB);
         
         IJ.log("**************************************************\nImage A: "+this.titleA+"\nImage B: "+this.titleB);
+        
+        // OB: Build results Table
+        rt = ResultsTable.getResultsTable();
+        if(rt == null) { rt = new ResultsTable(); }
+        
+        // Increment the counter already
+        rt.incrementCounter();
+        rt.addValue("Image A", this.titleA);
+        rt.addValue("Image B", this.titleB);
+        if (roi != null)
+        rt.addValue("ROI", roiName);
+        
+        
      }
     
-    /** Creates a new instance of ImageColocalizer */
-    public ImageColocalizer(ImagePlus ipA, ImagePlus ipB) {
-        this(ipA, ipB, new Calibration());
-    }
-    
+   
     public void Pearson() {
         this.doThat=true;
-        IJ.log("\nPearson's Coefficient:\nr="+round(linreg(A,B,0,0)[2],3));
+        // OB: Add Pearsons Coefficient to Results Table
+        double pearsons_coeff = linreg(A,B,0,0)[2];
+        IJ.log("\nPearson's Coefficient:\nr="+round(pearsons_coeff,3));
+        rt.addValue("Pearson's Coefficient", pearsons_coeff);
     }
     
     /*public void Pearson(int TA, int TB) {
@@ -93,8 +188,10 @@ public class ImageColocalizer {
         IJ.log("\nPearson's Coefficient using thesholds:\nr="+round(linreg(A,B,TA,TB)[2],3));
     }*/
     
-    public void Overlap(int thrA, int thrB){
-        double num=0;
+    public void Overlap(){
+
+        
+    	double num=0;
         double numThr=0;
         double den1=0;
         double den1Thr=0;
@@ -119,10 +216,53 @@ public class ImageColocalizer {
         IJ.log("\n\nUsing thresholds (thrA="+thrA+" and thrB="+thrB+")");
         IJ.log("\nOverlap Coefficient:\nr="+round(OverlapCoeffThr,3));
         IJ.log("\nr^2=k1xk2:\nk1="+round(numThr/den1Thr,3)+"\nk2="+round(numThr/den2Thr,3));
+        
+        // OB: Add Overlap Coefficients to Results Table
+        rt.addValue("Overlap Coefficient",OverlapCoeff);
+        rt.addValue("k1",num/den1);
+        rt.addValue("k2",num/den2);
+
+        rt.addValue("Threshold A", thrA);
+        rt.addValue("Threshold B", thrB);
+        rt.addValue("Thresholded Overlap Coefficient",OverlapCoeffThr);
+        rt.addValue("Thresholded k1", numThr/den1Thr);
+        rt.addValue("Thresholded k2", numThr/den2Thr);
+
+    }
+    /*
+     * Area overlap measurements
+     * Measures the area above the thresholds on both channels as well as the overlap
+     */
+    public void Areas() {
+    	double AA=0, AB=0, AAB = 0;
+    	
+    	for (int i=0; i<this.length; i++){
+    		if (this.A[i]>thrA) { AA++; }
+    		if (this.B[i]>thrB) { AB++;	}
+    		if (this.A[i]>thrA && this.B[i]>thrB) { AAB++;}
+    	}
+        
+    	// Calibrate
+    	AA*=Math.pow(impA.getCalibration().pixelWidth,2);
+    	AB*=Math.pow(impA.getCalibration().pixelWidth,2);
+    	AAB*=Math.pow(impA.getCalibration().pixelWidth,2);
+    	
+        IJ.log("\nArea Measurements ("+impA.getCalibration().getXUnit()+")\n Area A="+round(AA,0)+"Area B="+round(AB,0)+
+        		"\n Area Overlap="+round(AAB,0));
+
+    	rt.addValue("Area A", AA);
+        rt.addValue("Area B", AB);
+        rt.addValue("Area Overlap", AAB);
     }
     
-    public void MM(int thrA, int thrB){
-        double sumAcoloc=0;
+    /*
+     * Manders Coefficients
+     * Calculation logic was untouched by OB
+     */
+    public void MM(){
+
+    	
+    	double sumAcoloc=0;
         double sumAcolocThr=0;
         double sumA=0;
         double sumAThr=0;
@@ -145,6 +285,17 @@ public class ImageColocalizer {
 
         IJ.log("\nManders' Coefficients (original):\nM1="+round(M1,3)+" (fraction of A overlapping B)\nM2="+round(M2,3)+" (fraction of B overlapping A)");
         IJ.log("\nManders' Coefficients (using threshold value of "+thrA+" for imgA and "+thrB+" for imgB):\nM1="+round(M1Thr,3)+" (fraction of A overlapping B)\nM2="+round(M2Thr,3)+" (fraction of B overlapping A)");
+        
+        // OB: Add Manders to Results Table
+        rt.addValue("M1", M1);
+        rt.addValue("M2", M2);
+        
+        rt.addValue("Threshold A", thrA);
+        rt.addValue("Threshold B", thrB);
+        
+        rt.addValue("Thresholded M1", M1Thr);
+        rt.addValue("Thresholded M2", M2Thr);
+    
     }
     
     public void CostesAutoThr() {
@@ -218,23 +369,25 @@ public class ImageColocalizer {
             if (this.B[i]>CostesThrB) CostesSumBThr+=this.B[i];
         }
         
-        Plot plot=new Plot("Costes' threshold "+this.titleA+" and "+this.titleB,"ThrA", "Pearson's coefficient below",rx,ry);
-        plot.setLimits(LoopMin, LoopMax, rmin, rmax);
-        plot.setColor(Color.black);
-        plot.draw();
+        costes_plot=new Plot("Costes' threshold "+this.titleA+" and "+this.titleB,"ThrA", "Pearson's coefficient below",rx,ry);
+        costes_plot.setLimits(LoopMin, LoopMax, rmin, rmax);
+        costes_plot.setColor(Color.black);
+        costes_plot.draw();
         
         //Draw the zero line
         double[] xline={CostesThrA, CostesThrA};
         double[] yline={rmin, rmax};
-        plot.setColor(Color.red);
-        plot.addPoints(xline, yline, 2);
+        costes_plot.setColor(Color.red);
+        costes_plot.addPoints(xline, yline, 2);
         
-        plot.show();
+        // OB: Removed output so that we can display the plots programmatically 
+        //plot.show();
         
-        ImagePlus CostesMask=NewImage.createRGBImage("Costes' mask",this.width,this.height,this.nbSlices,0);
-        CostesMask.getProcessor().setValue(Math.pow(2, this.depth));
+        // OB: Created local variable to be able to request the image as needed.
+        costesMask=NewImage.createRGBImage("Costes' mask",this.width,this.height,this.nbSlices,0);
+        costesMask.getProcessor().setValue(Math.pow(2, this.depth));
         for (int k=1; k<=this.nbSlices; k++){
-            CostesMask.setSlice(k);
+        	costesMask.setSlice(k);
             for (int j=0; j<this.height; j++){
                 for (int i=0; i<this.width; i++){
                     int position=offset(i,j,k);
@@ -247,13 +400,13 @@ public class ImageColocalizer {
                         //CostesMask.getProcessor().drawPixel(i,j);
                         for (int l=0; l<=2; l++) color[l]=255;
                     }
-                    CostesMask.getProcessor().putPixel(i,j,color);
+                    costesMask.getProcessor().putPixel(i,j,color);
                 }
             }
         }
-        CostesMask.setCalibration(this.cal);
-        CostesMask.setSlice(1);
-        CostesMask.show();
+        costesMask.setCalibration(this.cal);
+        costesMask.setSlice(1);
+        //costesMask.show();
                
         
         IJ.showStatus("");
@@ -264,6 +417,18 @@ public class ImageColocalizer {
         IJ.log("\nCostes' automatic threshold set to "+CostesThrA+" for imgA & "+CostesThrB+" for imgB");
         IJ.log("Pearson's Coefficient:\nr="+round(linreg(this.A, this.B,CostesThrA,CostesThrB)[2],3)+" ("+round(CostesPearson,3)+" below thresholds)");
         IJ.log("M1="+round(CostesSumAThr/CostesSumA,3)+" & M2="+round(CostesSumBThr/CostesSumB,3));
+        
+        // OB: Add Costes to results table 
+        rt.addValue("Threshold A", CostesThrA);
+        rt.addValue("Threshold B", CostesThrB);
+        
+        rt.addValue("Thresholded M1", CostesSumAThr/CostesSumA);
+        rt.addValue("Thresholded M2", CostesSumBThr/CostesSumB);
+        
+        // Seeing as it was set, set the thresholds here
+        this.thrA = CostesThrA;
+        this.thrB = CostesThrB;
+        
         
     }
     
@@ -358,19 +523,19 @@ public class ImageColocalizer {
             count++;
         }
         IJ.log ("CCF min.: "+round(CCFmin,3)+" (obtained for dx="+lmin+") CCF max.: "+round(CCFmax,3)+" (obtained for dx="+lmax+")");
-        Plot plot=new Plot("Van Steensel's CCF between "+this.titleA+" and "+this.titleB,"dx", "CCF",x,CCFarray);
-        plot.setLimits(-CCFx, CCFx, CCFmin-(CCFmax-CCFmin)*0.05, CCFmax+(CCFmax-CCFmin)*0.05);
-        plot.setColor(Color.white);
-        plot.draw();
+        cff_plot=new Plot("Van Steensel's CCF between "+this.titleA+" and "+this.titleB,"dx", "CCF",x,CCFarray);
+        cff_plot.setLimits(-CCFx, CCFx, CCFmin-(CCFmax-CCFmin)*0.05, CCFmax+(CCFmax-CCFmin)*0.05);
+        cff_plot.setColor(Color.white);
+        cff_plot.draw();
         
         //Previous plot is white, just to get values inserted into the plot list, the problem being that the plot is as default a line plot... Following line plots same values as circles.
-        plot.setColor(Color.black);
-        plot.addPoints(x, CCFarray, Plot.CIRCLE);
+        cff_plot.setColor(Color.black);
+        cff_plot.addPoints(x, CCFarray, Plot.CIRCLE);
         
         double[] xline={0,0};
         double[] yline={CCFmin-(CCFmax-CCFmin)*0.05,CCFmax+(CCFmax-CCFmin)*0.05};
-        plot.setColor(Color.red);
-        plot.addPoints(xline, yline, 2);
+        cff_plot.setColor(Color.red);
+        cff_plot.addPoints(xline, yline, 2);
         
         CurveFitter cf=new CurveFitter(x, CCFarray);
         double[] param={CCFmin, CCFmax, lmax, (double) CCFx}; 
@@ -379,13 +544,25 @@ public class ImageColocalizer {
         param=cf.getParams();
         IJ.log("\nResults for fitting CCF on a Gaussian (CCF=a+(b-a)exp(-(xshift-c)^2/(2d^2))):"+cf.getResultString()+"\nFWHM="+Math.abs(round(2*Math.sqrt(2*Math.log(2))*param[3], 3))+" pixels");
         for (int i=0; i<x.length; i++) CCFarray[i]=cf.f(CurveFitter.GAUSSIAN, param, x[i]);
-        plot.setColor(Color.BLUE);
-        plot.addPoints(x, CCFarray, 2);
+        cff_plot.setColor(Color.BLUE);
+        cff_plot.addPoints(x, CCFarray, 2);
         
         IJ.showStatus("");
         IJ.showProgress(2,1);
 
-        plot.show();
+        //plot.show();
+        
+        // OB: Add CFF to results table
+        rt.addValue("CCF Min", CCFmin);
+        rt.addValue("CCF Min DX Location", lmin);
+        
+        
+        rt.addValue("CCF Max", CCFmax);
+        rt.addValue("CCF Max DX Location", lmax);
+
+        rt.addValue("CCF Fit FWHM", Math.abs(2*Math.sqrt(2*Math.log(2))*param[3]));
+        
+
         
     }
     
@@ -395,28 +572,28 @@ public class ImageColocalizer {
         double[] Adb=int2double(this.A);    
         double[] Bdb=int2double(this.B);    
             
-        Plot plot = new Plot("Cytofluorogram between "+this.titleA+" and "+this.titleB, this.titleA, this.titleB, Adb, Bdb);
+        fluorogram_plot = new Plot("Cytofluorogram between "+this.titleA+" and "+this.titleB, this.titleA, this.titleB, Adb, Bdb);
         double limHigh=Math.max(this.Amax, this.Bmax);
         double limLow=Math.min(this.Amin, this.Bmin);
-        plot.setLimits(this.Amin, this.Amax, this.Bmin, this.Bmax);
-        plot.setColor(Color.white);
+        fluorogram_plot.setLimits(this.Amin, this.Amax, this.Bmin, this.Bmax);
+        fluorogram_plot.setColor(Color.white);
         
         this.doThat=true;
         double[] tmp=linreg(this.A, this.B, 0, 0);
         double a=tmp[0];
         double b=tmp[1];
         double CoeffCorr=tmp[2];
-        plot.draw();
-        plot.setColor(Color.black);
-        plot.addPoints(Adb, Bdb, 6);
+        fluorogram_plot.draw();
+        fluorogram_plot.setColor(Color.black);
+        fluorogram_plot.addPoints(Adb, Bdb, 6);
         
         double[] xline={limLow,limHigh};
         double[] yline={a*limLow+b,a*limHigh+b};
-        plot.setColor(Color.red);
-        plot.addPoints(xline, yline, 2);
+        fluorogram_plot.setColor(Color.red);
+        fluorogram_plot.addPoints(xline, yline, 2);
                 
         //cyto.show();
-        plot.show();
+        //plot.show();
         IJ.log("\nCytofluorogram's parameters:\na: "+round(a,3)+"\nb: "+round(b,3)+"\nCorrelation coefficient: "+round(CoeffCorr,3));
 
     }
@@ -458,17 +635,17 @@ public class ImageColocalizer {
        
        ICQ=ICQ/this.length-0.5;
        
-       Plot plotA = new Plot("ICA A ("+this.titleA+")", "(Ai-a)(Bi-b)", this.titleA, new double[]{0, 0}, new double[]{0, 0});
-       plotA.setColor(Color.white);
-       plotA.setLimits(-lim, lim, 0, 1);
-       plotA.draw();
-       plotA.setColor(Color.black);
-       plotA.addPoints(x, Anorm, Plot.DOT);
-       plotA.draw();
+       ica_a_plot = new Plot("ICA A ("+this.titleA+")", "(Ai-a)(Bi-b)", this.titleA, new double[]{0, 0}, new double[]{0, 0});
+       ica_a_plot.setColor(Color.white);
+       ica_a_plot.setLimits(-lim, lim, 0, 1);
+       ica_a_plot.draw();
+       ica_a_plot.setColor(Color.black);
+       ica_a_plot.addPoints(x, Anorm, Plot.DOT);
+       ica_a_plot.draw();
        
-       plotA.setColor(Color.red);
-       plotA.drawLine(0, 0, 0, 1);
-       plotA.show();
+       ica_a_plot.setColor(Color.red);
+       ica_a_plot.drawLine(0, 0, 0, 1);
+       //plotA.show();
        
        
        /*double[] xline={0,0};
@@ -478,21 +655,24 @@ public class ImageColocalizer {
         
        plotA.show();*/
        
-       Plot plotB = new Plot("ICA B ("+this.titleB+")", "(Ai-a)(Bi-b)", titleB, new double[]{0, 0}, new double[]{0, 0});
-       plotB.setColor(Color.white);
-       plotB.setLimits(-lim, lim, 0, 1);
-       plotB.draw();
-       plotB.setColor(Color.black);
-       plotB.addPoints(x, Bnorm, Plot.DOT);
+       ica_b_plot = new Plot("ICA B ("+this.titleB+")", "(Ai-a)(Bi-b)", titleB, new double[]{0, 0}, new double[]{0, 0});
+       ica_b_plot.setColor(Color.white);
+       ica_b_plot.setLimits(-lim, lim, 0, 1);
+       ica_b_plot.draw();
+       ica_b_plot.setColor(Color.black);
+       ica_b_plot.addPoints(x, Bnorm, Plot.DOT);
        
        
-       plotB.setColor(Color.red);
-       plotB.drawLine(0, 0, 0, 1);
+       ica_b_plot.setColor(Color.red);
+       ica_b_plot.drawLine(0, 0, 0, 1);
        //plotB.addPoints(xline, yline, Plot.LINE);
         
-       plotB.show();
+       //plotB.show();
        
        IJ.log("\nLi's Intensity correlation coefficient:\nICQ: "+ICQ);
+       
+       // OB: Add CFF to results table
+       rt.addValue("ICQ", ICQ);
         
      }
     
@@ -640,24 +820,24 @@ public class ImageColocalizer {
          IJ.showStatus("Costes' randomization loop n�"+f+"/"+nbRand);
          }
          
-         //Draw the last randomized image, if requiered
+         //Draw the last randomized image, if required
          if (showRand){
-             ImagePlus Rand=NewImage.createImage("Randomized images of "+this.titleB,this.widthCostes,this.heightCostes,this.nbsliceCostes,this.depth, 1);
+             costes_rand = NewImage.createImage("Randomized images of "+this.titleB,this.widthCostes,this.heightCostes,this.nbsliceCostes,this.depth, 1);
              
              index=0;
              for (int k=1; k<=this.nbsliceCostes; k++){
-                 Rand.setSlice(k);
+            	 costes_rand.setSlice(k);
                  for (int j=0;j<this.heightCostes; j++){
                      for (int i=0; i<this.widthCostes;i++){
-                         Rand.getProcessor().putPixel(i, j, BRandCostes[index]);
+                    	 costes_rand.getProcessor().putPixel(i, j, BRandCostes[index]);
                          index++;
                      }
                  }
              }
-             Rand.setCalibration(this.cal);
-             Rand.setSlice(1);
-             Rand.show();
-             IJ.setMinAndMax(this.Bmin,this.Bmax);
+             costes_rand.setCalibration(this.cal);
+             costes_rand.setSlice(1);
+             //Rand.show();
+             //IJ.setMinAndMax(this.Bmin,this.Bmax);
          }
          
          //Plots the r probability distribution
@@ -692,20 +872,20 @@ public class ImageColocalizer {
          arrayDistribR=arrayNew;
          
          
-         Plot plot = new Plot("Costes' method ("+this.titleA+" & "+this.titleB+")", "r", "Probability density of r", x, arrayDistribR);
-         plot.setLimits(minx-10*binWidth, maxx+10*binWidth, 0, maxy*1.05);
-         plot.setColor(Color.white);
-         plot.draw();
+         costes_rand_plot = new Plot("Costes' method ("+this.titleA+" & "+this.titleB+")", "r", "Probability density of r", x, arrayDistribR);
+         costes_rand_plot.setLimits(minx-10*binWidth, maxx+10*binWidth, 0, maxy*1.05);
+         costes_rand_plot.setColor(Color.white);
+         costes_rand_plot.draw();
         
          //Previous plot is white, just to get values inserted into the plot list, the problem being that the plot is as default a line plot... Following line plots same values as circles.
-         plot.setColor(Color.black);
-         plot.addPoints(x, arrayDistribR, Plot.CIRCLE);
+         costes_rand_plot.setColor(Color.black);
+         costes_rand_plot.addPoints(x, arrayDistribR, Plot.CIRCLE);
          
         //Draw the r line
          double[] xline={r2test,r2test};
          double[] yline={0,maxy*1.05};
-         plot.setColor(Color.red);
-         plot.addPoints(xline, yline, 2);
+         costes_rand_plot.setColor(Color.red);
+         costes_rand_plot.addPoints(xline, yline, 2);
          
          
          //Retrieves the mean, SD and P-value of the r distribution
@@ -742,13 +922,13 @@ public class ImageColocalizer {
          
          IJ.log("\nResults for fitting the probability density function on a Gaussian (Probability=a+(b-a)exp(-(R-c)^2/(2d^2))):"+cf.getResultString()+"\nFWHM="+Math.abs(round(2*Math.sqrt(2*Math.log(2))*param[3], 3)));
          for (i=0; i<x.length; i++) arrayDistribR[i]=cf.f(CurveFitter.GAUSSIAN, param, x[i]);
-         plot.setColor(Color.BLUE);
-         plot.addPoints(x, arrayDistribR, 2);
-         plot.show();
+         costes_rand_plot.setColor(Color.BLUE);
+         costes_rand_plot.addPoints(x, arrayDistribR, 2);
+         //plot.show();
          
      }
     
-    public void distBetweenCentres(int thrA, int thrB, int minSize, int maxSize, double limXY, double limZ, boolean cMass, boolean fullList, boolean showImage){
+    public void distBetweenCentres(int minSize, int maxSize, double limXY, double limZ, boolean cMass, boolean fullList, boolean showImage){
         if (this.countA==null) this.countA=new Counter3D(this.A, this.titleA, this.width, this.height, this.nbSlices, thrA, minSize, maxSize, this.cal);
         if (this.countB==null) this.countB=new Counter3D(this.B, this.titleB, this.width, this.height, this.nbSlices, thrB, minSize, maxSize, this.cal);
         
@@ -764,7 +944,7 @@ public class ImageColocalizer {
             cenB=this.countB.getCentroidList();
         }
         
-        String[] header={"Centre_A_n�", "Centre_B_n�", "d(A-B)", "reference_dist", "phi", "theta", "XA", "YA", "ZA", "XB", "YB", "ZB"};
+        String[] header={"Centre_A_ni", "Centre_B_um", "d(A-B)", "reference_dist", "phi", "theta", "XA", "YA", "ZA", "XB", "YB", "ZB"};
         ResultsTable rt=new ResultsTable();
         for (int i=0; i<header.length; i++) rt.setHeading(i, header[i]);
         int index=0;
@@ -816,8 +996,8 @@ public class ImageColocalizer {
                     }
                     
                     rt.incrementCounter();
-                    rt.setValue("Centre_A_n�", index, i+1);
-                    rt.setValue("Centre_B_n�", index, j+1);
+                    rt.setValue("Centre_A_ni", index, i+1);
+                    rt.setValue("Centre_B_ni", index, j+1);
                     if (fullList) rt.setLabel(distXYZ<=distRef?"Colocalization":"No colocalization", index);
                     rt.setValue("d(A-B)", index, distXYZ);
                     rt.setValue("reference_dist", index, distRef);
@@ -845,32 +1025,32 @@ public class ImageColocalizer {
         String title="Distance based colocalization between "+this.titleA+ " and "+this.titleB+(cMass?" (centres of mass)":" (geometrical centres)");
         
         if (showImage){
-            ImagePlus img=NewImage.createImage(title, this.width, this.height, this.nbSlices, 24, 1);
+            centers_img  = NewImage.createImage(title, this.width, this.height, this.nbSlices, 24, 1);
             for (int i=0; i<cenA.length; i++){
                 if (cenAbool[i] || fullList){
-                    img.setSlice((int) cenA[i][2]);
+                	centers_img.setSlice((int) cenA[i][2]);
                     int[] val={255, 0, 0};
                     if (cenAbool[i]) val[2]=255;
-                    img.getProcessor().putPixel((int) cenA[i][0], (int) cenA[i][1], val);
+                    centers_img.getProcessor().putPixel((int) cenA[i][0], (int) cenA[i][1], val);
                 }
             }
             
-            img.show();
+            //centers_img.show();
             
             for (int i=0; i<cenB.length; i++){
                 if (cenBbool[i] || fullList){
-                    img.setSlice((int) cenB[i][2]);
-                    int[] val=img.getPixel((int) cenB[i][0], (int) cenB[i][1]);
+                	centers_img.setSlice((int) cenB[i][2]);
+                    int[] val=centers_img.getPixel((int) cenB[i][0], (int) cenB[i][1]);
                     val[1]=255;
                     if (cenBbool[i]) val[2]=255;
                     if (val[0]==255 && val[1]==255) val[2]=0;
-                    img.getProcessor().putPixel((int) cenB[i][0], (int) cenB[i][1], val);
+                    centers_img.getProcessor().putPixel((int) cenB[i][0], (int) cenB[i][1], val);
                 }
             }
-            img.setCalibration(this.micronCal);
-            img.getProcessor().resetMinAndMax();
+            centers_img.setCalibration(this.micronCal);
+            centers_img.getProcessor().resetMinAndMax();
             //img.show();
-            img.updateAndDraw();
+           //centers_img.updateAndDraw();
         }
         
         rt.show(title);
@@ -879,15 +1059,16 @@ public class ImageColocalizer {
         IJ.log("Particles size between "+minSize+" & "+maxSize);
         IJ.log("Image A: "+nbColocA+" centre(s) colocalizing out of "+cenA.length);
         IJ.log("Image B: "+nbColocB+" centre(s) colocalizing out of "+cenB.length);
+        
     }
     
-    public void coincidenceCentreParticle(int thrA, int thrB, int minSize, int maxSize, boolean cMass, boolean fullList, boolean showImage){
+    public void coincidenceCentreParticle(int minSize, int maxSize, boolean cMass, boolean fullList, boolean showImage){
         if (this.countA==null) this.countA=new Counter3D(this.A, this.titleA, this.width, this.height, this.nbSlices, thrA, minSize, maxSize, this.cal);
         if (this.countB==null) this.countB=new Counter3D(this.B, this.titleB, this.width, this.height, this.nbSlices, thrB, minSize, maxSize, this.cal);
         
         String title=(cMass?" (Centres of mass)":" (Geometrical centres)")+" of "+this.titleA+"-Particles of "+this.titleB+" based colocalization";
         ResultsTable rt=new ResultsTable();
-        String[] header={"Centre_"+this.titleA+"_n�", "Particle_"+this.titleB+"_n�", "X", "Y", "Z"};
+        String[] header={"Centre_"+this.titleA+"_ni", "Particle_"+this.titleB+"_ni", "X", "Y", "Z"};
         for (int i=0; i<header.length; i++) rt.setHeading(i, header[i]);
         
         Object3D[] objCentres=this.countA.getObjectsList();
@@ -922,8 +1103,8 @@ public class ImageColocalizer {
                     }
                     
                     rt.incrementCounter();
-                    rt.setValue("Centre_"+this.titleA+"_n�", index, i+1);
-                    rt.setValue("Particle_"+this.titleB+"_n�", index, j+1);
+                    rt.setValue("Centre_"+this.titleA+"_ni", index, i+1);
+                    rt.setValue("Particle_"+this.titleB+"_ni", index, j+1);
                     if (fullList) rt.setLabel(isColoc?"Colocalization":"No colocalization", index);
                     rt.setValue("X", index, currCent[0]);
                     rt.setValue("Y", index, currCent[1]);
@@ -942,32 +1123,32 @@ public class ImageColocalizer {
         for (int i=0; i<partBool.length; i++) if (partBool[i]) nbColocB++;
         
         if (showImage){
-            ImagePlus img=NewImage.createImage(title, this.width, this.height, this.nbSlices, 24, 1);
+            coinc_img=NewImage.createImage(title, this.width, this.height, this.nbSlices, 24, 1);
             for (int i=0; i<objParticles.length; i++){
                 if (partBool[i] || fullList){
                     for (int j=0; j<objParticles[i].size; j++){
-                        img.setSlice(objParticles[i].obj_voxels[j][2]);
+                    	coinc_img.setSlice(objParticles[i].obj_voxels[j][2]);
                         int[] val={255, 0, 0};
-                        img.getProcessor().putPixel(objParticles[i].obj_voxels[j][0], objParticles[i].obj_voxels[j][1], val);
+                        coinc_img.getProcessor().putPixel(objParticles[i].obj_voxels[j][0], objParticles[i].obj_voxels[j][1], val);
                     }
                 }
             }
             
-            img.show();
+            //coinc_img.show();
             
             for (int i=0; i<objCentres.length; i++){
                 if (centBool[i] || fullList){
                     double[] currCent=cMass?(objCentres[i].c_mass):(objCentres[i].centroid);
-                    img.setSlice((int) currCent[2]);
-                    int[] val=img.getPixel((int) currCent[0], (int) currCent[1]);
+                    coinc_img.setSlice((int) currCent[2]);
+                    int[] val=coinc_img.getPixel((int) currCent[0], (int) currCent[1]);
                     val[1]=255;
-                    img.getProcessor().putPixel((int) currCent[0], (int) currCent[1], val);
+                    coinc_img.getProcessor().putPixel((int) currCent[0], (int) currCent[1], val);
                 }
             }
             
-            img.setCalibration(this.micronCal);
-            img.getProcessor().resetMinAndMax();
-            img.updateAndDraw();
+            coinc_img.setCalibration(this.micronCal);
+            coinc_img.getProcessor().resetMinAndMax();
+            //coinc_img.updateAndDraw();
         }
         
         rt.show(title);
@@ -1176,4 +1357,371 @@ public class ImageColocalizer {
          y/=Math.pow(10,z);
          return y;
     }
+    
+    
+	public ImagePlus getFluorogramImage(int min, int max) {
+
+		Plot fp = getFluorogram();
+
+		float[] valA = fp.getXValues();
+		float[] valB = fp.getYValues();
+		
+		int nbins = 256;
+		int lut_size = 15;
+		// Keep number of bins of 256 and we can scale the image as needed later
+		
+		// Processor with the bins
+		ImageProcessor fluo_ip = new FloatProcessor(nbins, nbins);
+		fluo_ip.set(0.0);
+		// Processor with the X Scale
+		ImageProcessor grad_A = new ShortProcessor(nbins, lut_size);
+		
+		// Processor with the Y Scale
+		ImageProcessor grad_B = new ShortProcessor(lut_size, nbins);
+		
+		// Final Color processor with the fluorogram
+		ImageProcessor fluo = new ColorProcessor(nbins+lut_size+1, nbins+lut_size+1);
+		
+		//Normalize the values and bin them
+		for (int i=0; i<valA.length; i++) {
+			
+			int binA = (int) Math.round( (((double) valA[i] - (double) min) / (double) max * (double) (nbins-1)));
+			int binB = (int) Math.round( (((double) valB[i] - (double) min) / (double) max * (double) (nbins-1)));
+			//IJ.log("A:"+binA+" B:"+binB);
+			
+			if (binA < nbins && binB < nbins && binA >= 0 && binB >= 0) {
+				fluo_ip.setf(binA, nbins-binB-1, fluo_ip.getPixelValue(binA, nbins-binB-1)+1);
+			}
+		}
+		//Log of the values
+		fluo_ip.log();
+		
+		// Build the grayLevels
+		for(int i=0; i<nbins; i++) {
+			for(int j=0; j<lut_size; j++) {
+				grad_A.set(i,j,i);
+				grad_B.set(j,nbins-i-1,i);
+			}
+		}
+		
+		grad_A.setLut(impA.getLuts()[0]);
+		grad_B.setLut(impB.getLuts()[0]);
+		
+		// Somehow load the Fire LUT
+		fluo_ip.setLut(ColocOutput.fireLUT());
+		fluo_ip.setMinAndMax(0, 6);
+		
+		fluo_ip.convertToRGB();
+		
+		//fluo_ip.setColor(impA.getLuts()[0].getRGB(0));
+		fluo_ip.setColor(new Color(255,255,255));
+		fluo_ip.drawLine(thrA, nbins, thrA, 0);
+
+		//fluo_ip.setColor(impB.getLuts()[0].getColorModel().);
+		fluo_ip.drawLine(0, nbins-thrB-1, nbins, nbins-thrB-1);
+		
+		// Build fluorogram
+		fluo.copyBits(grad_A.convertToRGB(), lut_size+1, nbins+1, Blitter.ADD);
+		fluo.copyBits(grad_B.convertToRGB(), 0, 0, Blitter.ADD);
+		fluo.copyBits(fluo_ip, lut_size+1, 0, Blitter.ADD);
+		
+		// Add threshold lines
+		
+		return new ImagePlus(fp.getTitle(), fluo);
+	}
+    
+    // OB: Extra functions to return the results
+    public void showResults() {
+    	rt.show("Results");
+    }
+
+	public Plot getICAPlot() {
+		return icq_plot;
+	}
+
+	public Plot getCostesPlot() {
+		return costes_plot;
+	}
+
+	public Plot getCFFPlot() {
+		return cff_plot;
+	}
+
+	public ImagePlus getCostesMask() {
+		return costesMask;
+	}
+
+	public Plot getICAaPlot() {
+		return ica_a_plot;
+	}
+
+	public Plot getICAbPlot() {
+		return ica_b_plot;
+	}
+
+	public ImagePlus getCostesRandImg() {
+		return costes_rand;
+	}
+
+	public Plot getCostes_rand_plot() {
+		return costes_rand_plot;
+	}
+
+	public ImagePlus getCentersImg() {
+		return centers_img;
+	}
+
+	public ImagePlus getCoincidentImg() {
+		return coinc_img;
+	}
+	
+	public Plot getFluorogram() {
+		return fluorogram_plot;
+	}
+	
+	public void setThresholds(int thrA, int thrB) {
+		
+		this.thrA = thrA;
+		this.thrB = thrB;
+		impA.getProcessor().setThreshold(this.thrA , impA.getProcessor().getMaxThreshold(), ImageProcessor.NO_LUT_UPDATE);
+		impB.getProcessor().setThreshold(this.thrB , impB.getProcessor().getMaxThreshold(), ImageProcessor.NO_LUT_UPDATE);
+
+	}
+	
+	public int getThresholdA() {
+		return this.thrA;
+	}
+	
+	public int getThresholdB() {
+		return this.thrB;
+	}
+	
+	
+	public void setThresholds(String thrMetA, String thrMetB) {
+		
+		
+		// Allow for thresholds to be either manual or automatic
+		if(thrMetA.matches("\\d*")) {
+			this.thrA = Integer.valueOf(thrMetA);
+			impA.getProcessor().setThreshold(this.thrA , impA.getProcessor().getMaxThreshold(), ImageProcessor.NO_LUT_UPDATE);
+		
+		} else {
+		
+			// Add the ROIs, to ensure proper thresholds
+			
+			impA.getProcessor().resetThreshold();
+			impA.setRoi(roi);
+			
+			// Bug with setAutoThreshold, check whether to use stack or not by hand...
+			// Otherwise we get an incorrect value
+			if(impA.getNSlices() > 1) {
+				IJ.setAutoThreshold(impA, thrMetA+" dark stack");
+			} else {
+				IJ.setAutoThreshold(impA, thrMetA+" dark");
+			}
+			this.thrA = (int) impA.getProcessor().getMinThreshold();
+		}
+		
+		// Allow for thresholds to be either manual or automatic
+		if(thrMetB.matches("\\d*")) {
+			IJ.log("Threshold "+thrMetB+" matches regex");
+			this.thrB = Integer.valueOf(thrMetB);
+			impB.getProcessor().setThreshold(this.thrB , impB.getProcessor().getMaxThreshold(), ImageProcessor.NO_LUT_UPDATE);
+			
+		} else {
+		
+			impB.getProcessor().resetThreshold();
+			impB.setRoi(roi);
+			
+			if(impB.getNSlices() > 1) {
+				IJ.setAutoThreshold(impB, thrMetB+" dark stack");
+			} else {
+				IJ.setAutoThreshold(impB, thrMetB+" dark");
+			}
+			
+			this.thrB = (int) impB.getProcessor().getMinThreshold();
+			
+		}
+				
+		//impA.killRoi();
+		//impB.killRoi();
+		
+		rt.addValue("Auto Threshold A", thrMetA);
+		rt.addValue("Auto Threshold B", thrMetB);
+		
+		
+				
+	}
+	
+	public ImagePlus getImageA() {
+		return impA;
+	}
+
+	public ImagePlus getImageB() {
+		return impB;
+	}
+	
+	public ImagePlus getRGBImage(ImagePlus imp, Boolean is_zProject) {
+		
+		imp.killRoi();
+		ImagePlus impr = imp.duplicate();
+		impr.setTitle(imp.getTitle());
+		
+		if(is_zProject) {
+			ZProjector zp = new ZProjector(impr);
+			zp.setMethod(ZProjector.MAX_METHOD);
+			zp.doHyperStackProjection(true);
+			impr = zp.getProjection();
+		}
+		return flattenRoi(impr);
+	}
+	
+	public ImagePlus getRGBImageA(Boolean is_Z) {
+		return getRGBImage(impA, is_Z);
+	}
+	
+	public ImagePlus getRGBImageB(Boolean is_Z) {
+		return getRGBImage(impB, is_Z);
+	}
+	
+	public ImagePlus getRGBColocImage() {
+		// This should return an rgb image of the composite of the two channels, with the pixels as a mask
+		
+		// Make a composite of the two images
+		ImagePlus[] images = {impA, impB};
+		
+		
+		ImagePlus comp = RGBStackMerge.mergeChannels(images, true);
+		return flattenRoi(comp);
+		
+	}
+	
+	public ImagePlus getMaskA() {
+		return binarize(impA, thrA);
+		
+	}
+	
+	public ImagePlus getMaskB() {
+		return binarize(impB, thrB);
+	}
+	
+	public ImagePlus getRGBMaskA() {
+		return flattenRoi(binarize(impA, thrA));
+		
+	}
+	
+	public ImagePlus getRGBMaskB() {
+		return flattenRoi(binarize(impB, thrB));
+		
+	}
+	
+	public ImagePlus getANDMask() {
+		ImagePlus impMA = getMaskA();
+		ImagePlus impMB = getMaskB();
+		
+		ImagePlus impAND = new ImagePlus(impA.getTitle()+" AND "+impB.getTitle(), impMA.getStack());
+		// DO an AND
+		int nSlices = impMA.getStackSize();
+		if(nSlices > 1) {
+			ImageStack stackA = impMA.getStack();
+			ImageStack stackB = impMB.getStack();
+			ImageStack andStack = impMA.createEmptyStack();
+			ImageProcessor ip;
+			for(int i=1; i<=nSlices; i++) {
+				ip = stackA.getProcessor(i).duplicate();
+				ip.copyBits(stackB.getProcessor(i), 0, 0, Blitter.AND);
+				andStack.addSlice(ip);	
+			}
+			impAND.setStack(andStack);
+			return impAND;
+		} else {
+			ImageProcessor ip = impMA.getProcessor().duplicate();
+			ip.copyBits(impMB.getProcessor(), 0, 0, Blitter.AND);
+			impAND.setProcessor(ip);
+			return impAND;
+		}
+	}
+	
+	public ImagePlus getRGBANDMask() {
+		return flattenRoi(getANDMask());
+	}
+	
+	
+	
+	// Proper flattening of the ROI onto the image or stack
+	private ImagePlus flattenRoi(ImagePlus imp) {
+		if(roi != null) {
+			roi.setStrokeWidth(2);
+			roi.setStrokeColor(roiColor);
+			imp.setOverlay(roi, roiColor, 2, null);
+			imp.setHideOverlay(false);
+		} else {
+			// Make an empty overlay			
+			imp.setOverlay(new Roi(1, 1, 1, 1), new Color(0,0,0,0), 1, new Color(0,0,0,0));
+			imp.setHideOverlay(false);
+			
+		}
+		if (imp.getStackSize() >1) {
+			imp.flattenStack();
+		} else {
+			imp = imp.flatten();
+		}
+		return imp;
+		
+	}
+	
+	
+	// Seeing as binarizing images properly is a bitch, let's do it ourselves...
+	private ImagePlus binarize(ImagePlus imp, int lowerThr) { 
+		
+		if (imp.getStackSize() == 1) {
+			ImagePlus imp2 = new ImagePlus("Mask "+imp.getTitle(), binarize(imp.getProcessor(), lowerThr));
+			imp2.setCalibration(imp.getCalibration());
+			return imp2;
+		}
+		
+		// Handle stack
+		ImageProcessor ip;
+		ImageStack stack1 = imp.getStack();
+		ImageStack stack2 = imp.createEmptyStack();
+		int nSlices = imp.getStackSize();
+		String label;
+		
+		for(int i=1; i<=nSlices; i++) {
+			label = 
+			stack1.getSliceLabel(i);
+			ip = stack1.getProcessor(i);
+			stack2.addSlice(label, binarize(ip, lowerThr));
+		}
+		
+		ImagePlus imp2 = new ImagePlus("Mask "+imp.getTitle(), stack2);
+		imp2.setCalibration(imp.getCalibration()); //update calibration
+		
+		return imp2;
+	}
+	// Binarize image processor
+	private ImageProcessor binarize(ImageProcessor ip, int lowerThr) {
+		ByteProcessor bp = new ByteProcessor(ip.getWidth(), ip.getHeight());
+		for(int x=0; x<ip.getWidth(); x++) {
+			for(int y=0; y<ip.getHeight(); y++) {
+				if (ip.getf(x, y) >= lowerThr) {
+					bp.set(x,y, 255);
+				}
+			}
+		}
+		return bp;
+	}
+	
+	public void addResult(String name, int value) {
+		rt.addValue(name, value);
+	}
+	
+	public void addResult(String name, String value) {
+		rt.addValue(name, value);
+	}
+	
+	public void removeLastRow() {
+		rt.deleteRow(rt.getCounter()-1);
+	}
+
 }
