@@ -24,34 +24,28 @@ package ch.epfl.biop.coloc;
  *
 */
 
-import ij.*;
-import ij.ImagePlus.*;
-import ij.gui.*;
-import ij.measure.*;
-import ij.plugin.*;
-import ij.plugin.frame.*;
-import ij.process.*;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.beans.*;
 import java.io.File;
-import java.io.IOException;
-import java.text.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.*;
-import javax.swing.event.*;
-
-import org.scijava.plugin.Parameter;
-
-import ch.epfl.biop.coloc.utils.ColocOutput;
 import ch.epfl.biop.coloc.utils.ImageColocalizer;
-import ch.epfl.biop.coloc.utils.ImgInfo;
-import ch.epfl.biop.montage.Multi_Stack_Montage;
 import ch.epfl.biop.montage.StackMontage;
 import fiji.util.gui.GenericDialogPlus;
+import ij.IJ;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.Roi;
+import ij.measure.Calibration;
+import ij.plugin.Duplicator;
+import ij.plugin.MontageMaker;
+import ij.plugin.PlugIn;
+import ij.plugin.StackCombiner;
+import ij.plugin.Thresholder;
+import ij.plugin.frame.RoiManager;
+import ij.process.ImageProcessor;
 
 public class JACoP_B implements PlugIn {
     
@@ -125,15 +119,18 @@ public class JACoP_B implements PlugIn {
 		List<ImagePlus> results = new ArrayList<ImagePlus>();
 		
 		// Get eventual ROIs
-		RoiManager rm = RoiManager.getInstance();
+		RoiManager rm = RoiManager.getInstance2();
 		if(rm == null) {
 			rm = new RoiManager(false);
+			IJ.log("The ROI Manager was empty");			
 			
 		}
-		
+		IJ.log("There are "+rm.getCount()+" ROIs available");
+
 		if (rm.getCount() > 0) {
 			hasRoiSets = true;
 		}
+		
 		Roi roi = im.getRoi();
 
 		int rcount = (rm.getCount()>0) ? rm.getCount() : 1;
@@ -142,6 +139,8 @@ public class JACoP_B implements PlugIn {
 			if(hasRoiSets) {
 				im.setRoi(rm.getRoi(r));
 				roi = rm.getRoi(r);
+				IJ.log("Selected ROI number "+r);
+
 			}
 
 			im.deleteRoi();
@@ -409,27 +408,28 @@ public class JACoP_B implements PlugIn {
     
     
     public static void main(String[] args) {     
-    	// set the plugins.dir property to make the plugin appear in the Plugins menu
+		// set the plugins.dir property to make the plugin appear in the Plugins menu
 		Class<?> clazz = JACoP_B.class;
 		String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
-		String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
+		String pluginsDir = url.substring("file:".length(), url.length() - clazz.getName().length() - ".class".length());
 		System.setProperty("plugins.dir", pluginsDir);
 		
-		// start ImageJ
 		ImageJ ij = new ImageJ();
+		ij.exitWhenQuitting(true);
+		
 		// Make some nice images
-		ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/confocal-series.zip");
-		imp.show();
+		//ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/confocal-series.zip");
+		//imp.show();
 	//	ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
+		ImagePlus imp = IJ.openImage("F:\\People\\Nadine Schmidt\\20170712_KN35_IF_A1_2_LUT_BC.tif");
+		imp.show();
+		IJ.openImage("F:\\People\\Nadine Schmidt\\ROI Sets\\20170712_KN35_IF_A1_2_LUT_BC.zip");
 		
-		
-		int[] xpoints = {166,150,258,253,212};
-		int[] ypoints = {256,208,137,244,291};
-		imp.setRoi(new PolygonRoi(xpoints,ypoints,5,Roi.POLYGON));
-		
-		
-		
-		IJ.run("BIOP JACoP", "");
+		//int[] xpoints = {166,150,258,253,212};
+		//int[] ypoints = {256,208,137,244,291};
+		//imp.setRoi(new PolygonRoi(xpoints,ypoints,5,Roi.POLYGON));
+
+		IJ.run("JACoP_B", "");
     }
 }
 

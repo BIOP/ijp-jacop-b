@@ -116,6 +116,7 @@
 		<license.licenseName>gpl_v3</license.licenseName>
 		<license.copyrightOwners>Susanne Bolte, Fabrice P. Cordelières, Olivier Burri</license.copyrightOwners>
 		<imagej.app.directory>C:/Fiji/</imagej.app.directory>
+		<main-class>ch.epfl.biop.coloc.JACoP_B</main-class>
 	</properties>
 
 	<repositories>
