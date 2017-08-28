@@ -87,14 +87,20 @@ public class ImageColocalizer {
     }
     
     public ImageColocalizer(ImagePlus imp, int channelA, int channelB) {
+    	
+    	
 		Roi roi = imp.getRoi();
 		imp.deleteRoi();
 		ImagePlus[] channels = ChannelSplitter.split(imp);
-		
+	
 		if(roi != null) {
 			channels[channelA-1].setRoi(roi);
 			channels[channelB-1].setRoi(roi);
 		}
+		
+		
+		
+		
 		setup(channels[channelA-1], channels[channelB-1], imp.getCalibration());
 		
     }
@@ -116,6 +122,7 @@ public class ImageColocalizer {
     		
     		impA = oipA.duplicate();
     		impB = oipB.duplicate();
+
     		
     		oipA.setRoi(roi);
     		oipB.setRoi(roi);
@@ -126,8 +133,8 @@ public class ImageColocalizer {
     			impB.getStack().getProcessor(i).fillOutside(roi);
     		}
     		// Set the title of the images
-    		impA.setTitle("("+roiName+")-"+oipA.getTitle());
-    		impB.setTitle("("+roiName+")-"+oipB.getTitle());
+    		impA.setTitle(oipA.getTitle());
+    		impB.setTitle(oipB.getTitle());
     		
     	} else {
     		impA = oipA;
@@ -170,7 +177,6 @@ public class ImageColocalizer {
         rt.addValue("Image B", this.titleB);
         if (roi != null)
         rt.addValue("ROI", roiName);
-        
         
      }
     
@@ -1500,6 +1506,11 @@ public class ImageColocalizer {
 	public void setThresholds(String thrMetA, String thrMetB) {
 		
 		
+		// ON 16 BIT IMAGES, the DISPLAY RANGE IS RESET!!!!!!!!!
+		double[][] rangeA = getDisplayRange(impA);
+		double[][] rangeB = getDisplayRange(impB);
+  		showDisplayRange(impA);
+  		
 		// Allow for thresholds to be either manual or automatic
 		if(thrMetA.matches("\\d*")) {
 			this.thrA = Integer.valueOf(thrMetA);
@@ -1549,7 +1560,9 @@ public class ImageColocalizer {
 		rt.addValue("Auto Threshold A", thrMetA);
 		rt.addValue("Auto Threshold B", thrMetB);
 		
-		
+		setDisplayRange(impA, rangeA);
+		setDisplayRange(impB, rangeB);
+
 				
 	}
 	
@@ -1566,16 +1579,17 @@ public class ImageColocalizer {
 		imp.killRoi();
 		ImagePlus impr = imp.duplicate();
 		impr.setTitle(imp.getTitle());
-		
+			
 		if(is_zProject) {
 			ZProjector zp = new ZProjector(impr);
 			zp.setMethod(ZProjector.MAX_METHOD);
 			zp.doHyperStackProjection(true);
 			impr = zp.getProjection();
 		}
+		
 		return flattenRoi(impr);
 	}
-	
+
 	public ImagePlus getRGBImageA(Boolean is_Z) {
 		return getRGBImage(impA, is_Z);
 	}
@@ -1586,10 +1600,8 @@ public class ImageColocalizer {
 	
 	public ImagePlus getRGBColocImage() {
 		// This should return an rgb image of the composite of the two channels, with the pixels as a mask
-		
 		// Make a composite of the two images
 		ImagePlus[] images = {impA, impB};
-		
 		
 		ImagePlus comp = RGBStackMerge.mergeChannels(images, true);
 		return flattenRoi(comp);
@@ -1699,6 +1711,7 @@ public class ImageColocalizer {
 		
 		return imp2;
 	}
+	
 	// Binarize image processor
 	private ImageProcessor binarize(ImageProcessor ip, int lowerThr) {
 		ByteProcessor bp = new ByteProcessor(ip.getWidth(), ip.getHeight());
@@ -1724,4 +1737,32 @@ public class ImageColocalizer {
 		rt.deleteRow(rt.getCounter()-1);
 	}
 
+	private double[][] getDisplayRange(ImagePlus imp) {
+		double[][] drange = new double[imp.getNChannels()][];
+		
+		for(int i=0;i<drange.length;i++) {
+			imp.setC(i+1);
+			drange[i] = new double[2];
+			drange[i][0] = imp.getDisplayRangeMin();
+			drange[i][1] = imp.getDisplayRangeMax();
+		}
+		return drange;
+	}
+	
+	private void setDisplayRange(ImagePlus impr, double[][] range) {
+		// TODO Auto-generated method stub
+		for(int i=0; i<range.length;i++) {
+			impr.setC(i+1);
+			impr.setDisplayRange(range[i][0], range[i][1]);
+		}
+	}
+	private void showDisplayRange(ImagePlus imp) {
+		for(int i=0; i<imp.getNChannels();i++)
+		{
+			imp.setC(i+1);
+			IJ.log("Channel "+(i+1)+" MIN: "+imp.getDisplayRangeMin()+", MAX: "+imp.getDisplayRangeMax()+" For Image "+imp.getTitle());
+		}
+	}
+
+	
 }
