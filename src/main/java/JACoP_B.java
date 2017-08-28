@@ -93,15 +93,13 @@ public class JACoP_B implements PlugIn {
 	
 		// Make some sense of it all
 		
-		//Switch from folder to single image mode
-		if (imageFolder == null) {
+		//Switch from folder to single image mode			
+		// Setup the image and all settings
+		this.imp = IJ.getImage();
+		runColoc();
 			
-			// Setup the image and all settings
-			this.imp = IJ.getImage();
-			runColoc();
-			
-		}
 	}
+	
 
 		
 	private void runColoc() {
@@ -147,14 +145,18 @@ public class JACoP_B implements PlugIn {
 			if(hasRoiSets) {
 				roi = (Roi) rm.getRoi(r).clone();
 			}
+			String roiName = null;
 			
 			imp.setRoi(roi);
 			
-			String roiName = roi.getName();
-			if (roiName == null) {
-    			roiName = "ROI";
-    		}
-			
+			// Get the name of the ROI	
+			if (roi != null) {
+				roiName = roi.getName();
+				if (roiName == null) {
+	    			roiName = "ROI";
+	    		}
+			}
+						
 			imageName = imp.getTitle()+" ("+roiName+")";
 			
 			
@@ -192,8 +194,10 @@ public class JACoP_B implements PlugIn {
 				ImagePlus tmp = null;
 				
 				for(int i=0; i< zImages.length;i++) {
-					roi.setPosition(0);
-					zImages[i].setRoi(roi);
+					if(roi != null) {
+						roi.setPosition(0);
+						zImages[i].setRoi(roi);
+					}
 					
 					ic = new ImageColocalizer( zImages[i], channelA, channelB);
 					
@@ -291,7 +295,7 @@ public class JACoP_B implements PlugIn {
 		
 		tmp.setTitle(imp.getTitle()+" T"+timepoint);
 		// If there was a roi, we should update it
-		if(is_crop) {
+		if(is_crop && roi!= null) {
 			roi.setLocation(0, 0);
 			tmp.setRoi(roi);
 		}		
@@ -305,7 +309,8 @@ public class JACoP_B implements PlugIn {
 		if(doOverlap) ic.Overlap();
 		if(doICA) ic.ICA();
 		if(doFluorogram) ic.CytoFluo();
-		
+		int rows = 3;
+		int columns = 2;
 		// Always get the images and make a montage
 		ArrayList<ImagePlus> imgs = new ArrayList<ImagePlus>();
         if(is_montage_vertical) {
@@ -325,6 +330,9 @@ public class JACoP_B implements PlugIn {
 			imgs.add(ic.getRGBMaskA());
 			imgs.add(ic.getRGBMaskB());
 			imgs.add(ic.getRGBANDMask());
+			columns = 3;
+			rows = 2;
+			
         }
         ImagePlus montage;
         
@@ -339,12 +347,13 @@ public class JACoP_B implements PlugIn {
         	 		montagestk.addSlice(i.getProcessor().convertToRGB());
         	 	}
         	 	MontageMaker mm = new MontageMaker();
-            	montage = mm.makeMontage2(new ImagePlus("for montage",montagestk), 2, 3, 1.0, 1, imgs.size(), 1, 0, false);
+            	montage = mm.makeMontage2(new ImagePlus("for montage",montagestk), columns, rows, 1.0, 1, imgs.size(), 1, 0, false);
 
         } else {
-        	montage = StackMontage.montageImages(imgs,3, 2);
+        	montage = StackMontage.montageImages(imgs,rows, columns);
         }
     	
+        
 
 		//Eventually add the fluorogram
 		if(doFluorogram) {
@@ -375,8 +384,9 @@ public class JACoP_B implements PlugIn {
 	        }
 	        
 			montage = new ImagePlus(imageName+" Report", montagefluo);
-			//new ImagePlus("Test", montagefluo).show();
 		}
+		
+		montage.setTitle(imageName+" Report");
 		return montage;
 	}
 
