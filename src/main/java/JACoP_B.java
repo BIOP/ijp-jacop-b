@@ -22,12 +22,14 @@
  *
 */
 
+import java.awt.Rectangle;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import ch.epfl.biop.coloc.utils.ImageColocalizer;
+import ch.epfl.biop.coloc.utils.Utils;
 import ch.epfl.biop.montage.StackMontage;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
@@ -36,6 +38,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.Roi;
+import ij.gui.ShapeRoi;
 import ij.measure.Calibration;
 import ij.plugin.Duplicator;
 import ij.plugin.MontageMaker;
@@ -101,13 +104,25 @@ public class JACoP_B implements PlugIn {
 	}
 	
 
-		
+	/*
+	 * As it currently stands, the ImageColocalizer will do a coloc analysis of
+	 * Time, Z, all bundled together, so we work to split them BEFORE
+	 * giving them to the ImageColocalizer
+	 * STEPS: 
+	 *  A - Split timepoints, always
+	 *  B - Split Z slices, as needed.
+	 *  
+	 *  In both cases, care should be taken to manage ROIs properly
+	 *  STEPS: 
+	 *  A - If there is a ROI and we want to crop the images, duplicate the ROI and offset it
+	 *  B - If there is no ROI, just hand the image over
+	 *  C - If there is a ROI but no crop, duplicate the image without the ROI and add it again
+	 *  
+	 *  These handle whether the ROI is on the RoiManager or on the image
+	 *  NOTE that the ROIManager will always win. So if there is a ROI on the image that is not 
+	 *  in the ROI Manager too, it will be ignored (and lost)
+	 */
 	private void runColoc() {
-		// check dimensions and split in Z and T accordingly
-		
-		int nC = imp.getNChannels();
-		int nZ = imp.getNSlices();
-		int nT = imp.getNFrames();
 		
 		// Check which thresholds to use
 		if(thrA.matches("Use Manual Threshold Below")) thrA = String.valueOf(mThrA);
@@ -115,60 +130,70 @@ public class JACoP_B implements PlugIn {
 		
 		if(thrA.matches("Costes Auto-Threshold") || thrA.matches("Costes Auto-Threshold"))  doCostesThr = true;
 
-		
 		// He who makes the magic happen
 		ImageColocalizer ic;
 		
-		// Store results
+		// Store results, as there might be many runs of ImageColocalizer
 		List<ImagePlus> results = new ArrayList<ImagePlus>();
-		
-		
-		// Get eventual ROIs from the Manager
-		RoiManager rm = RoiManager.getInstance();
-		if(rm == null) {
-			rm = new RoiManager(false);
-		}
-		if (rm.getCount() > 0) {
-			hasRoiSets = true;
-		}
 		
 		// 	The ROI we need to haul around in case it's there
 		if(imp.getRoi() != null)
 			roi = (Roi) imp.getRoi().clone();
 		
+		// Get eventual ROIs from the Manager
+		RoiManager rm = RoiManager.getInstance();
+		if(rm == null) rm = new RoiManager(false);
+		// If this flag is set, then we will look for ROIs in the Roi Manager
+		if (rm.getCount() > 0) hasRoiSets = true;
+		
+		// Because we will be looping ROIs no matter what
+		// we need to have a ROI counter equal to at least 1
+		// Otherwise it will exit the loop without having done anythin
 		int rcount = (rm.getCount()>0) ? rm.getCount() : 1;
 		
-		// Master loop is for all ROIs
+		// LOOP 1: All ROIs, or single ROI if hasRoiSets is false
 		for(int r=0; r<rcount; r++) {
-			ImagePlus singleTimeImp;
 			// Choose the ROI here
-			if(hasRoiSets) {
-				roi = (Roi) rm.getRoi(r).clone();
-			}
+			if(hasRoiSets) roi = (Roi) rm.getRoi(r).clone(); 
+			
+			// Get some data on the ROI, is there one? Does it have a name?
 			String roiName = null;
-			
-			imp.setRoi(roi);
-			
-			// Get the name of the ROI	
 			if (roi != null) {
 				roiName = roi.getName();
 				if (roiName == null) {
 	    			roiName = "ROI";
 	    		}
+				
+				// Use to name final results wit the ROI name
+				imageName = imp.getTitle()+" ("+roiName+")";
+			} else {
+				imageName = imp.getTitle();
 			}
 						
-			imageName = imp.getTitle()+" ("+roiName+")";
+			// Set the ROI, could be null but that's not a problem
+			imp.setRoi(roi);
 			
+			// Single timepoint temporary ImagePlus
+			ImagePlus singleTimeImp;
 			
-			// Loop through time
+			// Loop through timepoints
+			int nT = imp.getNFrames();
+		
+			// LOOP 2: Time
 			for(int t=1; t<=nT; t++) {
-				singleTimeImp = cropTime(t, doCropRois);
+				
+				singleTimeImp = Utils.cropTime(imp, roi, t, doCropRois);
+				roi = (Roi) singleTimeImp.getRoi().clone();
 				
 				// Do Z separately, maybe
-				ImagePlus[] zImages = cropSlices(singleTimeImp, doSeparateZ);
+				ImagePlus[] zImages = Utils.cropSlices(singleTimeImp, roi, doSeparateZ);
+				
 				int thrAH = 0;
 				int thrBH = 0;
-				// Make sure to get the right thresholds if we are working on the stack histogram...
+				
+				
+				// Little Hacky: Make sure to get the right thresholds if we are working on the stack histogram...
+				// We need to initialize ImageColocalizer, get the thresholds and save them
 				if(is_stack_hist_z) {
 					// Need to run the colocalizer to get the thresholds
 					ic = new ImageColocalizer(singleTimeImp, channelA, channelB);
@@ -181,139 +206,124 @@ public class JACoP_B implements PlugIn {
 					// Save the thresholds for use below
 					thrAH = ic.getThresholdA();
 					thrBH = ic.getThresholdB();
+					IJ.log("Stack Histogram Threshold B Set: "+thrB);
+					IJ.log("Calculated Stack Histogram Threshold B: "+thrBH);
 					
 					// Because initializing the colocalizer writes a result already,
 					// We need to remove this ghost value
 					ic.removeLastRow();
-					
-				}
+				} // END CONDITION IS STACK Z for getting threhsolds
 				
+				
+				// The resulting image will be RGB and potentially a stack of T and Z
 				ImageStack res = null;
 				
-				// Iterate through all the images and do the actual work
-				ImagePlus tmp = null;
+				// This final loop will do the actual work
 				
+				// Temp placeholder for the resulting image that will need to be appended
+				ImagePlus tmp = null;
+								
+				// LOOP 3: Slices
 				for(int i=0; i< zImages.length;i++) {
+					// re-add the ROI to the dataset
 					if(roi != null) {
-						roi.setPosition(0);
+						// OHMYGODDONTASKMEABOUTHIS
+						roi.setPosition(0);  
+						// ... no what this does is ensure the ROI has no position data
+						// otherwise it does not get copied properly...
+						
+						// Normally there would only be the line below
 						zImages[i].setRoi(roi);
 					}
 					
+					
+					// Run some magic
 					ic = new ImageColocalizer( zImages[i], channelA, channelB);
 					
+					// Set the threshold to use, depending on the user choice
 					if(doCostesThr) {
 						ic.CostesAutoThr();
 					} else {
 						ic.setThresholds(thrA, thrB);
 					}
 					
-					ic.addResult("Using Stack Histogram", "False");
-					
-					// Set the thresholds again in case they are to be made on the stack
+					// Set the thresholds again in case they are to be made on the stack histogram.
 					if( is_stack_hist_z) {
 						ic.setThresholds(thrAH, thrBH);
 
 						// Let the user know we used the stack histogram
 						ic.addResult("Using Stack Histogram", "True");
+					} else { 
+						ic.addResult("Using Stack Histogram", "False");
 					}
-					// Do the analysis
+					
+					// Do the analysis, finally...
 					tmp = runAnalysis(ic);
+					
+					// Create the empty stack from the result of tmp...
+					// Looks a bit ugly but we are unsure of the size of the image
+					// Before the first run
 					if( i==0 ) {
 						res = tmp.createEmptyStack();
 					}
 					
+					// In the case we do Z, we need to catch a single imageProcessor and add it as a slice
+					// Otherwise we take the stack directly0
 					if(zImages.length > 1) { 
 						res.addSlice(tmp.getProcessor());
 					} else {
 						res = tmp.getStack();
 					}
-					//res.setSliceLabel(tmp.getTitle(), res.getSize()-1);
-		
+					
+					// Some extra data results to add, for the user to locate his data slice in the results
 					ic.addResult("Timepoint", t);
 					if(zImages.length > 1) ic.addResult("Slice", i+1);
 					
 					ic.showResults();
 					
-				}
-				tmp = new ImagePlus(tmp.getTitle(), res);
+				} // END LOOP 3: Slices
 				
+				// Reuse tmp to make the final ImagePlus for all Z
+				tmp = new ImagePlus(tmp.getTitle(), res); 
+				
+				// This list contains all the results for all ROIs and timepoints
 				results.add(tmp);
-			}
-		}
+			} // END LOOP 2: Time
+			
+			// Perhaps here we could make hyperstack in time as well, but it does not seem too useful...
+			
+		} // END LOOP 1: ROIs
 		
+		
+		// Show all images
 	 	for(ImagePlus i : results) {
 	 		i.show();
 	 	}
 	}
 	
-	private ImagePlus[] cropSlices(ImagePlus singleTimeImp, Boolean doSeparateZ) {
-		
-		int nC = imp.getNChannels();
-		int nZ = imp.getNSlices();
+	
 
-		Duplicator dup = new Duplicator();
-
-		if(doSeparateZ) {
-			ImagePlus[] zSlices = new ImagePlus[nZ];
-			for(int z=1; z<=nZ; z++) {
-				zSlices[z-1] = dup.run(singleTimeImp, 1, nC, z, z, 1,1);
-				zSlices[z-1].setTitle(singleTimeImp.getTitle()+" Z"+z);
-
-			}
-
-			return zSlices;
-		}
-
-		else {
-			ImagePlus[] allSlices = new ImagePlus[1];
-			allSlices[0] = singleTimeImp;
-			allSlices[0].setTitle(singleTimeImp.getTitle());
-
-			return allSlices;
-		}
-	}
-
-
-	private ImagePlus cropTime(int timepoint, Boolean is_crop) {
-		
-		
-		int nC = imp.getNChannels();
-		int nZ = imp.getNSlices();
-		
-		// We are working on imp, which is unchanged
-		Duplicator dup = new Duplicator();
-		
-		
-		// if we want to crop the ROI, do it here
-		if(is_crop) {
-			imp.setRoi(roi);
-		} else {
-			imp.killRoi();
-		}
-		
-		ImagePlus tmp = dup.run(imp, 1, nC, 1, nZ , timepoint, timepoint);			
-		
-		tmp.setTitle(imp.getTitle()+" T"+timepoint);
-		// If there was a roi, we should update it
-		if(is_crop && roi!= null) {
-			roi.setLocation(0, 0);
-			tmp.setRoi(roi);
-		}		
-		return tmp;
-	}
-
-
-	ImagePlus runAnalysis(ImageColocalizer ic) {
+	/*
+	 * This method actually runs the analysis and outputs a pretty report
+	 * At least... Oli thinks it's pretty
+	 */
+	private ImagePlus runAnalysis(ImageColocalizer ic) {
 		if(doPearsons) ic.Pearson();
 		if(doManders) ic.MM();
 		if(doOverlap) ic.Overlap();
 		if(doICA) ic.ICA();
 		if(doFluorogram) ic.CytoFluo();
+		
+		// Define rows and columns here in case we want a vertical report
 		int rows = 3;
 		int columns = 2;
-		// Always get the images and make a montage
+		
+		
+		// Get the images and make a montage
 		ArrayList<ImagePlus> imgs = new ArrayList<ImagePlus>();
-        if(is_montage_vertical) {
+        
+		// Vertical montage
+		if(is_montage_vertical) {
 			imgs.add(ic.getRGBImageA(false));
 			imgs.add(ic.getRGBMaskA());
 			
@@ -322,7 +332,9 @@ public class JACoP_B implements PlugIn {
 			
 			imgs.add(ic.getRGBColocImage());
 			imgs.add(ic.getRGBANDMask());
-        } else {
+			
+        // Horizontal Montage
+		} else { 
 			imgs.add(ic.getRGBImageA(false));
 			imgs.add(ic.getRGBImageB(false));
 			imgs.add(ic.getRGBColocImage());
@@ -334,83 +346,67 @@ public class JACoP_B implements PlugIn {
 			rows = 2;
 			
         }
+		
         ImagePlus montage;
         
-        // Make montage either vertical or horizontal
-
-        
-        
+        // Need to do a different thing if we are using stack or a single slice.        
         if(imgs.get(0).getNSlices() == 1) {
         	ImageStack montagestk = imgs.get(0).createEmptyStack();
             // Make a normal montage
         	 	for(ImagePlus i : imgs) {
-        	 		montagestk.addSlice(i.getProcessor().convertToRGB());
+        	 		montagestk.addSlice(i.getProcessor());
         	 	}
+        	 	// Use Montage Maker
         	 	MontageMaker mm = new MontageMaker();
             	montage = mm.makeMontage2(new ImagePlus("for montage",montagestk), columns, rows, 1.0, 1, imgs.size(), 1, 0, false);
 
         } else {
+        	// We can use Oli's Stack Montage for convenience
         	montage = StackMontage.montageImages(imgs,rows, columns);
         }
     	
-        
-
-		//Eventually add the fluorogram
+        //Eventually add the fluorogram
 		if(doFluorogram) {
-			ImagePlus fluo = ic.getFluorogramImage(fluo_min, fluo_max);
+			
+			ImagePlus fluo = ic.getFluorogramImage();
 			
 			ImagePlus scaledFluo = null;
 			
+			// Scale the fluorogram to the width or height of the image
 	        if(is_montage_vertical) {
-	        	scaledFluo = scale(fluo, montage.getWidth());
+	        	scaledFluo = Utils.scale(fluo, montage.getWidth());
 	        } else {
-	        	scaledFluo = scale(fluo, montage.getHeight());
+	        	scaledFluo = Utils.scale(fluo, montage.getHeight());
 
 	        }
-			ImageStack flst = scaledFluo.getStack();
+			
+	        ImageStack flst = scaledFluo.getStack();
 			// Make same number of dimensions as the montage (Z slices eventually)
 			for(int i=1; i<montage.getStackSize(); i++) {
 				flst.addSlice(scaledFluo.getProcessor().duplicate());
 			}
 			scaledFluo.setStack(flst);
+			
 			// Finally assemble them
 			StackCombiner sc = new StackCombiner();
+			
 			ImageStack montagefluo = null;
 	        if(is_montage_vertical) {
 	        	montagefluo = sc.combineVertically(montage.getStack(), scaledFluo.getStack());
 	        } else {
 	        	montagefluo = sc.combineHorizontally(montage.getStack(), scaledFluo.getStack());
-
 	        }
 	        
 			montage = new ImagePlus(imageName+" Report", montagefluo);
 		}
 		
+		// Make sure it's the title we want.
 		montage.setTitle(imageName+" Report");
+		
+		// And VIOLA
 		return montage;
 	}
 
-	
-
-    private ImagePlus scale(ImagePlus fluo, int width) {
-		if(fluo.getStackSize() == 1) {
-			ImageProcessor ip = fluo.getProcessor();
-		    ip.setInterpolationMethod(ImageProcessor.BILINEAR);
-
-		    return new ImagePlus(fluo.getTitle(), ip.resize(width));
-		}
-		
-		
-		ImageStack fscaledStack = fluo.createEmptyStack();
-		
-		for(int i=0; i<fluo.getStackSize(); i++) {
-			ImageProcessor ip = fluo.getProcessor();
-			fscaledStack.addSlice(ip.resize(width));
-		}
-		return new ImagePlus(fluo.getTitle(), fscaledStack);
-	}
-    
-    
 	private Boolean showDialog() {
 		// If no images, dialog with folder otherwise normal dialog
 		int nImages = WindowManager.getImageCount();
@@ -481,8 +477,6 @@ public class JACoP_B implements PlugIn {
 		is_montage_vertical = d.getNextBoolean();
 		doCostesRand = d.getNextBoolean();
 		
-		IJ.log("ThrA="+ thrA);
-		IJ.log("ThrB="+ thrB);
 		return true;
     }
     
@@ -501,10 +495,13 @@ public class JACoP_B implements PlugIn {
 		//ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/confocal-series.zip");
 		//imp.show();
 	//	ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
-		ImagePlus imp = IJ.openImage("F:\\People\\Nadine Schmidt\\20170712_KN35_IF_A1_2_LUT_BC.tif");
-		imp.show();
-		IJ.openImage("F:\\People\\Nadine Schmidt\\ROI Sets\\20170712_KN35_IF_A1_2_LUT_BC.zip");
+	//	ImagePlus imp = IJ.openImage("F:\\People\\Nadine Schmidt\\20170712_KN35_IF_A1_2_LUT_BC.tif");
 		
+		ImagePlus imp = IJ.openImage("E:\\JACOP\\20170816_KN47_IF_B1_2_LUT_BC.tif");
+		RoiManager rm =  new RoiManager();
+		rm.runCommand("Open", "E:\\JACOP\\singleCell.roi");
+		imp.show();
+
 		IJ.run("JACoP B", "");
     }
 }

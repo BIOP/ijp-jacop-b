@@ -1,5 +1,7 @@
 package ch.epfl.biop.coloc.utils;
 
+import java.awt.Color;
+
 /*  JACoP: "Just Another Colocalization Plugin..." v1, 13/02/06
     Fabrice P Cordelieres, fabrice.cordelieres at curie.u-psud.fr
     Susanne Bolte, Susanne.bolte@isv.cnrs-gif.fr
@@ -23,24 +25,30 @@ package ch.epfl.biop.coloc.utils;
  *
  *
 */
-
-import ij.*;
-import ij.gui.*;
-import ij.ImagePlus.*;
-import ij.measure.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.gui.NewImage;
+import ij.gui.Plot;
+import ij.gui.Roi;
+import ij.measure.Calibration;
+import ij.measure.CurveFitter;
+import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
 import ij.plugin.RGBStackMerge;
-import ij.plugin.Thresholder;
 import ij.plugin.ZProjector;
-import ij.process.*;
-
-import java.awt.*;
-
-import fiji.threshold.Auto_Threshold;
+import ij.process.Blitter;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
+import ij.process.ShortProcessor;
 
 /**
  *
  * @author Fabrice Cordelieres
+ * @author Olivier Burri
  */
 public class ImageColocalizer {
     int width, height, nbSlices, depth, length, widthCostes, heightCostes, nbsliceCostes, lengthCostes;
@@ -78,27 +86,27 @@ public class ImageColocalizer {
 	
 	// OB: Keep the Thresholds
 	private int thrA, thrB;
-	
-    /** Creates a new instance of ImageColocalizer */
-    
+	private ImageProcessor mask;
+	    
     /** Creates a new instance of ImageColocalizer */
     public ImageColocalizer(ImagePlus ipA, ImagePlus ipB) {
         setup(ipA, ipB, new Calibration());
     }
     
+    /*
+     * Convenience method to call the colocalizer using
+     * a single multichannel image and the channels to be used for coloc (1-based)
+     */
     public ImageColocalizer(ImagePlus imp, int channelA, int channelB) {
     	
     	
 		Roi roi = imp.getRoi();
 		imp.deleteRoi();
 		ImagePlus[] channels = ChannelSplitter.split(imp);
-	
 		if(roi != null) {
 			channels[channelA-1].setRoi(roi);
 			channels[channelB-1].setRoi(roi);
 		}
-		
-		
 		
 		
 		setup(channels[channelA-1], channels[channelB-1], imp.getCalibration());
@@ -106,17 +114,17 @@ public class ImageColocalizer {
     }
     
     
-    
+    /*
+     * This method sets up the ROIs and the data for each image that is given.
+     */
 	public void setup(ImagePlus oipA, ImagePlus oipB, Calibration cal) {
     	// Add functionality to handle ROIs
-    	// If either image has a ROI, start by clearing the pixels outside of the ROI, and use the ROI name in the image names
+    	// If either image has a ROI, clear the pixels outside the ROI
     	if (oipA.getRoi() != null || oipB.getRoi() != null) {
     		roi = (oipA.getRoi() != null ? oipA.getRoi() : oipB.getRoi());
     		
     		roiName = roi.getName();
-    		if (roiName == null) {
-    			roiName = "ROI";
-    		}
+    	
     		oipA.deleteRoi();
     		oipB.deleteRoi();
     		
@@ -126,21 +134,28 @@ public class ImageColocalizer {
     		
     		oipA.setRoi(roi);
     		oipB.setRoi(roi);
-    		
+    		mask = roi.getMask();
     		// Clear outside for both
     		for(int i = 1; i<=impA.getNSlices(); i++) {
-    			impA.getStack().getProcessor(i).fillOutside(roi);
-    			impB.getStack().getProcessor(i).fillOutside(roi);
+    			//impA.getStack().getProcessor(i).fillOutside(roi);
+    			Utils.clearOutside(impA.getStack().getProcessor(i), mask);
+    			Utils.clearOutside(impB.getStack().getProcessor(i), mask);
+    			
+    			//impB.getStack().getProcessor(i).fillOutside(roi);
     		}
     		// Set the title of the images
     		impA.setTitle(oipA.getTitle());
     		impB.setTitle(oipB.getTitle());
-    		
-    	} else {
+    	
+    	} else { // If there are no ROIs, it's rather simpler
+
     		impA = oipA;
     		impB = oipB;
     	}
     	
+    	/*
+    	 * Convenience initializations
+    	 */
     	this.width=impA.getWidth();
         this.height=impA.getHeight();
         this.nbSlices=impA.getNSlices();
@@ -167,6 +182,7 @@ public class ImageColocalizer {
         
         IJ.log("**************************************************\nImage A: "+this.titleA+"\nImage B: "+this.titleB);
         
+        
         // OB: Build results Table
         rt = ResultsTable.getResultsTable();
         if(rt == null) { rt = new ResultsTable(); }
@@ -177,7 +193,6 @@ public class ImageColocalizer {
         rt.addValue("Image B", this.titleB);
         if (roi != null)
         rt.addValue("ROI", roiName);
-        
      }
     
    
@@ -255,7 +270,6 @@ public class ImageColocalizer {
     	
         IJ.log("\nArea Measurements ("+impA.getCalibration().getXUnit()+")\n Area A="+round(AA,0)+"Area B="+round(AB,0)+
         		"\n Area Overlap="+round(AAB,0));
-
     	rt.addValue("Area A", AA);
         rt.addValue("Area B", AB);
         rt.addValue("Area Overlap", AAB);
@@ -549,7 +563,7 @@ public class ImageColocalizer {
         cf.doFit(CurveFitter.GAUSSIAN);
         param=cf.getParams();
         IJ.log("\nResults for fitting CCF on a Gaussian (CCF=a+(b-a)exp(-(xshift-c)^2/(2d^2))):"+cf.getResultString()+"\nFWHM="+Math.abs(round(2*Math.sqrt(2*Math.log(2))*param[3], 3))+" pixels");
-        for (int i=0; i<x.length; i++) CCFarray[i]=cf.f(CurveFitter.GAUSSIAN, param, x[i]);
+        for (int i=0; i<x.length; i++) CCFarray[i]=CurveFitter.f(CurveFitter.GAUSSIAN, param, x[i]);
         cff_plot.setColor(Color.BLUE);
         cff_plot.addPoints(x, CCFarray, 2);
         
@@ -927,7 +941,7 @@ public class ImageColocalizer {
          IJ.log("r (original)="+round(r2test,3)+"\nr (randomized)="+round(mean,3)+"�"+round(SD,3)+" (calculated from the fitted data)\nP-value="+round(Pval*100,2)+"% (calculated from the fitted data)");
          
          IJ.log("\nResults for fitting the probability density function on a Gaussian (Probability=a+(b-a)exp(-(R-c)^2/(2d^2))):"+cf.getResultString()+"\nFWHM="+Math.abs(round(2*Math.sqrt(2*Math.log(2))*param[3], 3)));
-         for (i=0; i<x.length; i++) arrayDistribR[i]=cf.f(CurveFitter.GAUSSIAN, param, x[i]);
+         for (i=0; i<x.length; i++) arrayDistribR[i]=CurveFitter.f(CurveFitter.GAUSSIAN, param, x[i]);
          costes_rand_plot.setColor(Color.BLUE);
          costes_rand_plot.addPoints(x, arrayDistribR, 2);
          //plot.show();
@@ -1203,34 +1217,6 @@ public class ImageColocalizer {
         }
     }
     
-    /** Generates the ImagePlus base on the input array and title.
-     * @param array containing the pixels intensities (integer array).
-     * @param title to attribute to the ImagePlus (string).
-     */
-    private ImagePlus buildImg(int[] array, String title){
-        int index=0;
-        double min=array[0];
-        double max=array[0];
-        ImagePlus img=NewImage.createImage(title, this.width, this.height, this.nbSlices, this.depth, 1);
-        
-        for (int z=1; z<=this.nbSlices; z++){
-            IJ.showStatus("Creating the image...");
-            img.setSlice(z);
-            for (int y=0; y<this.height; y++){
-                for (int x=0; x<this.width; x++){
-                    int currVal=array[index];
-                    min=Math.min(min, currVal);
-                    max=Math.max(max, currVal);
-                    img.getProcessor().putPixel(x,y, currVal);
-                    index++;
-                }
-            }
-        }
-        IJ.showStatus("");
-        img.setCalibration(this.micronCal);
-        img.getProcessor().setMinAndMax(min, max);
-        return img;
-    }
     
     public double[] linreg(int[] Aarray, int[] Barray, int TA, int TB){
          double num=0;
@@ -1364,7 +1350,49 @@ public class ImageColocalizer {
          return y;
     }
     
-    
+	public ImagePlus getFluorogramImage() {
+		float[] minmax = getFluorogramMinMax();
+		return getFluorogramImage((int)Math.floor(minmax[0]), (int)Math.floor(minmax[1]));	
+	}
+	
+	public float[] getFluorogramMinMax() {
+		Plot fp = getFluorogram();
+		float[] valA = fp.getXValues();
+		float[] valB = fp.getYValues();
+		
+		
+		float minA=Float.MAX_VALUE;
+		float maxA=0;
+		
+		float minB=Float.MAX_VALUE;
+		float maxB=0;
+		
+		for(int i=0; i<valA.length; i++) {
+			
+			if(minA > valA[i]) {
+				minA=valA[i];
+			}
+			if(minB > valB[i]) {
+				minB=valB[i];
+			}
+			if(maxA < valA[i]) {
+				maxA=valA[i];
+			}
+			if(maxB < valB[i]) {
+				maxB=valB[i];
+			}
+		}
+		float min, max;
+		min = (minA>minB) ? minB : minA;
+		max = (maxA<maxB) ? maxB : maxA;
+		
+		float[] minmax = {min, max};
+		
+		return minmax;
+	}
+    /*
+     * Builds a pretty fluorogram for display
+     */
 	public ImagePlus getFluorogramImage(int min, int max) {
 
 		Plot fp = getFluorogram();
@@ -1402,36 +1430,42 @@ public class ImageColocalizer {
 		//Log of the values
 		fluo_ip.log();
 		
-		// Build the grayLevels
+		// Build the grayLevels between the min and the max
+		int binWidth= (int) Math.round((double)(max-min) / (double)(nbins-1));
 		for(int i=0; i<nbins; i++) {
 			for(int j=0; j<lut_size; j++) {
-				grad_A.set(i,j,i);
-				grad_B.set(j,nbins-i-1,i);
+				int val =  (i+1)*binWidth;
+				grad_A.set(i,j,val);
+				grad_B.set(j,nbins-i-1,val);
 			}
 		}
 		
 		grad_A.setLut(impA.getLuts()[0]);
 		grad_B.setLut(impB.getLuts()[0]);
-		
 		// Somehow load the Fire LUT
 		fluo_ip.setLut(ColocOutput.fireLUT());
 		fluo_ip.setMinAndMax(0, 6);
 		
 		fluo_ip.convertToRGB();
 		
-		//fluo_ip.setColor(impA.getLuts()[0].getRGB(0));
+		// Add threshold lines
+		// Normalize Threshold to min/max
+		int thrAb = (int) Math.round( (((double) thrA - (double) min) / (double) max * (double) (nbins-1)));
+		int thrBb = (int) Math.round( (((double) thrB - (double) min) / (double) max * (double) (nbins-1)));
+		
+		
+		
 		fluo_ip.setColor(new Color(255,255,255));
-		fluo_ip.drawLine(thrA, nbins, thrA, 0);
+		fluo_ip.drawLine(thrAb, nbins, thrAb, 0);
 
 		//fluo_ip.setColor(impB.getLuts()[0].getColorModel().);
-		fluo_ip.drawLine(0, nbins-thrB-1, nbins, nbins-thrB-1);
+		fluo_ip.drawLine(0, nbins-thrBb-1, nbins, nbins-thrBb-1);
 		
 		// Build fluorogram
 		fluo.copyBits(grad_A.convertToRGB(), lut_size+1, nbins+1, Blitter.ADD);
 		fluo.copyBits(grad_B.convertToRGB(), 0, 0, Blitter.ADD);
 		fluo.copyBits(fluo_ip, lut_size+1, 0, Blitter.ADD);
 		
-		// Add threshold lines
 		
 		return new ImagePlus(fp.getTitle(), fluo);
 	}
@@ -1505,17 +1539,22 @@ public class ImageColocalizer {
 	
 	public void setThresholds(String thrMetA, String thrMetB) {
 		
-		
 		// ON 16 BIT IMAGES, the DISPLAY RANGE IS RESET!!!!!!!!!
-		double[][] rangeA = getDisplayRange(impA);
-		double[][] rangeB = getDisplayRange(impB);
-  		showDisplayRange(impA);
+		double[][] rangeA = Utils.getDisplayRange(impA);
+		double[][] rangeB = Utils.getDisplayRange(impB);
   		
+		if(roi!=null) {
+			for(int i=0; i<impA.getStackSize(); i++) {
+				impA.getStack().getProcessor(i+1).setMask(mask);
+				impB.getStack().getProcessor(i+1).setMask(mask);
+			}
+		}
+		
 		// Allow for thresholds to be either manual or automatic
 		if(thrMetA.matches("\\d*")) {
 			this.thrA = Integer.valueOf(thrMetA);
-			impA.getProcessor().setThreshold(this.thrA , impA.getProcessor().getMaxThreshold(), ImageProcessor.NO_LUT_UPDATE);
-		
+			impA.getProcessor().setThreshold(this.thrA , impA.getProcessor().getMaxThreshold(), ImageProcessor.RED_LUT);
+
 		} else {
 		
 			// Add the ROIs, to ensure proper thresholds
@@ -1535,9 +1574,9 @@ public class ImageColocalizer {
 		
 		// Allow for thresholds to be either manual or automatic
 		if(thrMetB.matches("\\d*")) {
-			IJ.log("Threshold "+thrMetB+" matches regex");
+			//IJ.log("Threshold "+thrMetB+" matches regex");
 			this.thrB = Integer.valueOf(thrMetB);
-			impB.getProcessor().setThreshold(this.thrB , impB.getProcessor().getMaxThreshold(), ImageProcessor.NO_LUT_UPDATE);
+			impB.getProcessor().setThreshold(this.thrB , impB.getProcessor().getMaxThreshold(), ImageProcessor.RED_LUT);
 			
 		} else {
 		
@@ -1551,17 +1590,17 @@ public class ImageColocalizer {
 			}
 			
 			this.thrB = (int) impB.getProcessor().getMinThreshold();
-			
 		}
-				
+		
+		
 		//impA.killRoi();
 		//impB.killRoi();
 		
 		rt.addValue("Auto Threshold A", thrMetA);
 		rt.addValue("Auto Threshold B", thrMetB);
 		
-		setDisplayRange(impA, rangeA);
-		setDisplayRange(impB, rangeB);
+		Utils.setDisplayRange(impA, rangeA);
+		Utils.setDisplayRange(impB, rangeB);
 
 				
 	}
@@ -1609,21 +1648,21 @@ public class ImageColocalizer {
 	}
 	
 	public ImagePlus getMaskA() {
-		return binarize(impA, thrA);
+		return Utils.binarize(impA, thrA);
 		
 	}
 	
 	public ImagePlus getMaskB() {
-		return binarize(impB, thrB);
+		return Utils.binarize(impB, thrB);
 	}
 	
 	public ImagePlus getRGBMaskA() {
-		return flattenRoi(binarize(impA, thrA));
+		return flattenRoi(Utils.binarize(impA, thrA));
 		
 	}
 	
 	public ImagePlus getRGBMaskB() {
-		return flattenRoi(binarize(impB, thrB));
+		return flattenRoi(Utils.binarize(impB, thrB));
 		
 	}
 	
@@ -1682,48 +1721,7 @@ public class ImageColocalizer {
 		
 	}
 	
-	
-	// Seeing as binarizing images properly is a bitch, let's do it ourselves...
-	private ImagePlus binarize(ImagePlus imp, int lowerThr) { 
-		
-		if (imp.getStackSize() == 1) {
-			ImagePlus imp2 = new ImagePlus("Mask "+imp.getTitle(), binarize(imp.getProcessor(), lowerThr));
-			imp2.setCalibration(imp.getCalibration());
-			return imp2;
-		}
-		
-		// Handle stack
-		ImageProcessor ip;
-		ImageStack stack1 = imp.getStack();
-		ImageStack stack2 = imp.createEmptyStack();
-		int nSlices = imp.getStackSize();
-		String label;
-		
-		for(int i=1; i<=nSlices; i++) {
-			label = 
-			stack1.getSliceLabel(i);
-			ip = stack1.getProcessor(i);
-			stack2.addSlice(label, binarize(ip, lowerThr));
-		}
-		
-		ImagePlus imp2 = new ImagePlus("Mask "+imp.getTitle(), stack2);
-		imp2.setCalibration(imp.getCalibration()); //update calibration
-		
-		return imp2;
-	}
-	
-	// Binarize image processor
-	private ImageProcessor binarize(ImageProcessor ip, int lowerThr) {
-		ByteProcessor bp = new ByteProcessor(ip.getWidth(), ip.getHeight());
-		for(int x=0; x<ip.getWidth(); x++) {
-			for(int y=0; y<ip.getHeight(); y++) {
-				if (ip.getf(x, y) >= lowerThr) {
-					bp.set(x,y, 255);
-				}
-			}
-		}
-		return bp;
-	}
+
 	
 	public void addResult(String name, int value) {
 		rt.addValue(name, value);
@@ -1737,32 +1735,7 @@ public class ImageColocalizer {
 		rt.deleteRow(rt.getCounter()-1);
 	}
 
-	private double[][] getDisplayRange(ImagePlus imp) {
-		double[][] drange = new double[imp.getNChannels()][];
-		
-		for(int i=0;i<drange.length;i++) {
-			imp.setC(i+1);
-			drange[i] = new double[2];
-			drange[i][0] = imp.getDisplayRangeMin();
-			drange[i][1] = imp.getDisplayRangeMax();
-		}
-		return drange;
-	}
 	
-	private void setDisplayRange(ImagePlus impr, double[][] range) {
-		// TODO Auto-generated method stub
-		for(int i=0; i<range.length;i++) {
-			impr.setC(i+1);
-			impr.setDisplayRange(range[i][0], range[i][1]);
-		}
-	}
-	private void showDisplayRange(ImagePlus imp) {
-		for(int i=0; i<imp.getNChannels();i++)
-		{
-			imp.setC(i+1);
-			IJ.log("Channel "+(i+1)+" MIN: "+imp.getDisplayRangeMin()+", MAX: "+imp.getDisplayRangeMax()+" For Image "+imp.getTitle());
-		}
-	}
 
 	
 }
