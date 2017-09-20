@@ -1,12 +1,8 @@
 package ch.epfl.biop.coloc.utils;
 
-import java.awt.Rectangle;
-
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
-import ij.gui.ShapeRoi;
 import ij.plugin.Duplicator;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;

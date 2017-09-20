@@ -38,7 +38,6 @@ import ij.plugin.ChannelSplitter;
 import ij.plugin.RGBStackMerge;
 import ij.plugin.ZProjector;
 import ij.process.Blitter;
-import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -1352,7 +1351,7 @@ public class ImageColocalizer {
     
 	public ImagePlus getFluorogramImage() {
 		float[] minmax = getFluorogramMinMax();
-		return getFluorogramImage((int)Math.floor(minmax[0]), (int)Math.floor(minmax[1]));	
+		return getFluorogramImage(256, (int)Math.floor(minmax[0]), (int)Math.floor(minmax[1]));	
 	}
 	
 	public float[] getFluorogramMinMax() {
@@ -1393,14 +1392,13 @@ public class ImageColocalizer {
     /*
      * Builds a pretty fluorogram for display
      */
-	public ImagePlus getFluorogramImage(int min, int max) {
+	public ImagePlus getFluorogramImage(int nbins, int min, int max) {
 
 		Plot fp = getFluorogram();
 
 		float[] valA = fp.getXValues();
 		float[] valB = fp.getYValues();
 		
-		int nbins = 256;
 		int lut_size = 15;
 		// Keep number of bins of 256 and we can scale the image as needed later
 		

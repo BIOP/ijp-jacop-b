@@ -8,8 +8,7 @@
  */
 
 package ch.epfl.biop.coloc.utils;
-import ij.*;
-import ij.measure.*;
+
 
 /**
  *

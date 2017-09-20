@@ -3,7 +3,9 @@
     Susanne Bolte, Susanne.bolte@isv.cnrs-gif.fr
  
     Copyright (C) 2006 Susanne Bolte & Fabrice P. Cordelieres
-  
+    
+    Readaptation of code by Olivier Burri v1, 20.09.2017
+    
     License:
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +24,6 @@
  *
 */
 
-import java.awt.Rectangle;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,15 +39,12 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.Roi;
-import ij.gui.ShapeRoi;
 import ij.measure.Calibration;
-import ij.plugin.Duplicator;
 import ij.plugin.MontageMaker;
 import ij.plugin.PlugIn;
 import ij.plugin.StackCombiner;
 import ij.plugin.Thresholder;
 import ij.plugin.frame.RoiManager;
-import ij.process.ImageProcessor;
 
 public class JACoP_B implements PlugIn {
     
@@ -57,10 +55,6 @@ public class JACoP_B implements PlugIn {
 	String thrA, thrB;
 	
 	int mThrA, mThrB;
-	
-	int fluo_min=0;
-	
-	int fluo_max=255;
 	
 	Boolean doCostesThr=false, doPearsons=false, doOverlap=false, doManders=false, doFluorogram=false, doICA=false, doCostesRand=false;
 	
@@ -87,12 +81,19 @@ public class JACoP_B implements PlugIn {
 	private String imageName;
 
 	private boolean is_montage_vertical;
-	
+
+
+	private boolean use_advanced;
+
+	private boolean is_auto_fluo = true;
+	private int fluo_bins = 256;
+	private int fluo_min=0;
+	private int fluo_max=255;
 	
 	@Override
 	public void run(String arg) {
 		
-		if (!showDialog()) return;
+		if (!mainDialog()) return;
 	
 		// Make some sense of it all
 		
@@ -367,8 +368,7 @@ public class JACoP_B implements PlugIn {
     	
         //Eventually add the fluorogram
 		if(doFluorogram) {
-			
-			ImagePlus fluo = ic.getFluorogramImage();
+			ImagePlus fluo = (is_auto_fluo) ? ic.getFluorogramImage() : ic.getFluorogramImage(fluo_bins, fluo_min,fluo_max);
 			
 			ImagePlus scaledFluo = null;
 			
@@ -407,7 +407,7 @@ public class JACoP_B implements PlugIn {
 		return montage;
 	}
 
-	private Boolean showDialog() {
+	private Boolean mainDialog() {
 		// If no images, dialog with folder otherwise normal dialog
 		int nImages = WindowManager.getImageCount();
 		
@@ -446,6 +446,7 @@ public class JACoP_B implements PlugIn {
 		d.addCheckbox("Report_As_Vertical_Montage", false);
 		
 		d.addCheckbox("Perform_Costes_Randomization (Not implemented)", false);
+		d.addCheckbox("Set Advanced Parameters", false);
 
 		
 		//d.addChoiceMessage("Report Choice");
@@ -477,11 +478,42 @@ public class JACoP_B implements PlugIn {
 		is_montage_vertical = d.getNextBoolean();
 		doCostesRand = d.getNextBoolean();
 		
+		use_advanced = d.getNextBoolean();
+		
+		if(use_advanced) {
+			return advancedDialog();
+		}
+		
 		return true;
     }
+	
+	
     
     
-    public static void main(String[] args) {     
+    private Boolean advancedDialog() {
+		// Advanced features, like Fluorogram bins
+		GenericDialogPlus d = new GenericDialogPlus("Advanced Parameters");
+    	d.addCheckbox("Auto-Adjust Fluorogram Per Image", true);
+    	d.addMessage("Otherwise, use parameters below");
+    	d.addNumericField("Fluorogram_Bins", 256, 0);
+		d.addNumericField("Fluorogram_Min", 0, 0);
+		d.addNumericField("Fluorogram_Max", 255, 0);
+		
+		d.showDialog();
+		if(d.wasCanceled()) {
+			return false;
+		}
+		
+		is_auto_fluo = d.getNextBoolean();
+		fluo_bins = (int) d.getNextNumber();
+		fluo_min  = (int) d.getNextNumber();
+		fluo_max  = (int) d.getNextNumber();
+
+		return true;
+	}
+
+
+	public static void main(String[] args) {     
 		// set the plugins.dir property to make the plugin appear in the Plugins menu
 		Class<?> clazz = JACoP_B.class;
 		String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
