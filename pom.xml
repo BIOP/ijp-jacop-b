@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>16.1.0</version>
+		<version>19.2.0</version>
 		<relativePath />
 	</parent>
 
 	<groupId>ch.epfl.biop.coloc</groupId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 
 	<name>JACoP_B</name>
 	<url>http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:jacop_2.0:just_another_colocalization_plugin:start</url>
@@ -129,22 +129,10 @@
 		<!-- ImageJ dependencies -->
 
 		<!-- ImgLib2 dependencies -->
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-ij</artifactId>
-		</dependency>
 
 		<!-- Third party dependencies -->
 
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Auto_Threshold</artifactId>
-		</dependency>
 		
-		<dependency>
-		  <groupId>sc.fiji</groupId>
-		  <artifactId>fiji-lib</artifactId>
-		</dependency>
 		
 		<dependency>
 		  <groupId>ch.epfl.biop.montage</groupId>
@@ -152,7 +140,15 @@
 		  <version>1.1.0</version>
 		  <scope>provided</scope>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji-lib</artifactId>
+		</dependency>
 	</dependencies>
 	<artifactId>JACoP_B</artifactId>
 	<description>An update to the JACoP Plugin that helps in the management of ROIs, Z sections and helps generate cleaner reports</description>
