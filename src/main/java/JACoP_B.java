@@ -38,6 +38,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.plugin.MontageMaker;
@@ -185,7 +186,7 @@ public class JACoP_B implements PlugIn {
 				
 				singleTimeImp = Utils.cropTime(imp, roi, t, doCropRois);
 				
-				if(roi != null) roi = (Roi) singleTimeImp.getRoi().clone();
+				if(roi != null && doCropRois) roi = (Roi) singleTimeImp.getRoi().clone();
 				
 				// Do Z separately, maybe
 				ImagePlus[] zImages = Utils.cropSlices(singleTimeImp, roi, doSeparateZ);
@@ -532,9 +533,13 @@ public class JACoP_B implements PlugIn {
 	//	ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
 	//	ImagePlus imp = IJ.openImage("F:\\People\\Nadine Schmidt\\20170712_KN35_IF_A1_2_LUT_BC.tif");
 		
-		ImagePlus imp = IJ.openImage("E:\\JACOP\\20170816_KN47_IF_B1_2_LUT_BC.tif");
-		RoiManager rm =  new RoiManager();
-		rm.runCommand("Open", "E:\\JACOP\\singleCell.roi");
+	//	ImagePlus imp = IJ.openImage("E:\\JACOP\\20170816_KN47_IF_B1_2_LUT_BC.tif");
+		ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
+		//IJ.setTool("freehand");
+		//IJ.setTool("polygon");
+		int[] xpoints = {264,139,89,203,331,322,190};
+		int[] ypoints = {114,118,230,269,265,153,178};
+		imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));
 		imp.show();
 
 		IJ.run("JACoP B", "");

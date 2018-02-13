@@ -133,7 +133,12 @@ public class ImageColocalizer {
     		
     		oipA.setRoi(roi);
     		oipB.setRoi(roi);
-    		mask = roi.getMask();
+    		
+    		
+    		ImageProcessor tip = oipA.getProcessor();
+    		tip.setRoi(roi);
+    		mask = Utils.getMask(impA, roi);
+
     		// Clear outside for both
     		for(int i = 1; i<=impA.getNSlices(); i++) {
     			//impA.getStack().getProcessor(i).fillOutside(roi);

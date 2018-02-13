@@ -176,13 +176,23 @@ public class Utils {
 		ImagePlus tmp = dup.run(imp, 1, nC, 1, nZ , timepoint, timepoint);			
 		tmp.setTitle(imp.getTitle()+" T"+timepoint);
 		// If there was a roi, we should update it
-		if(is_crop && roi!= null) {
+		if(roi!= null && is_crop) {
 			Roi roi2 = (Roi)roi.clone();
 			roi2.setLocation(0, 0);
 			tmp.setRoi(roi2);
 			roi = roi2;
 		}
 		return tmp;
+	}
+	/*
+	 * Because getMask() returns a cropped version, we need to implement our own...
+	 */
+	public static ImageProcessor getMask(ImagePlus imp, Roi roi) {
+        ImageProcessor ip = new ByteProcessor(imp.getWidth(), imp.getHeight());
+        ip.setRoi(roi);
+        ip.setValue(255);
+        ip.fill(ip.getMask());
+        return ip;
 	}
 }
 
