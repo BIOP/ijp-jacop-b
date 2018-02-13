@@ -37,7 +37,6 @@
 				<role>lead</role>
 				<role>developer</role>
 				<role>debugger</role>
-				<role>reviewer</role>
 			</roles>
 		</developer>
 		<developer>
@@ -46,9 +45,6 @@
 			<url>http://www.ibps.upmc.fr/fr/IBPS/annuaire/126-Susanne-Bolte</url>
 			<roles>
 				<role>founder</role>
-				<role>lead</role>
-				<role>developer</role>
-				<role>debugger</role>
 				<role>reviewer</role>
 			</roles>
 		</developer>
@@ -77,17 +73,18 @@
 	</developers>
 	<contributors>
 		<contributor>
-			<name>Olivier Burri</name>
-			<url>http://biop.epfl.ch/INFO_Facility.html#staff</url>
-			<roles><role>developer</role></roles>
-			<properties><id>oburri</id></properties>
+			<name>Nadine Eliane Schmit</name>
+			<url>https://people.epfl.ch/nadine.schmit?lang=en</url>
+			<roles><role>reviewer</role></roles>
+			<properties><id>nschmit</id></properties>
 		</contributor>
 		<contributor>
-			<name>Romain Guiet</name>
-			<url>http://biop.epfl.ch/INFO_Facility.html#staff</url>
-			<roles><role>developer</role></roles>
-			<properties><id>guiet</id></properties>
+			<name>Katyayanee Neopane</name>
+			<url>https://people.epfl.ch/katyayanee.neopane?lang=en</url>
+			<roles><role>reviewer</role></roles>
+			<properties><id>neopane</id></properties>
 		</contributor>
+		
 	</contributors>
 
 	<mailingLists>
@@ -147,7 +144,6 @@
 		<dependency>
 		  <groupId>sc.fiji</groupId>
 		  <artifactId>fiji-lib</artifactId>
-		  <version>2.1.2</version>
 		</dependency>
 		
 		<dependency>

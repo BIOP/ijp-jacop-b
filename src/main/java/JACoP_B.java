@@ -184,7 +184,8 @@ public class JACoP_B implements PlugIn {
 			for(int t=1; t<=nT; t++) {
 				
 				singleTimeImp = Utils.cropTime(imp, roi, t, doCropRois);
-				roi = (Roi) singleTimeImp.getRoi().clone();
+				
+				if(roi != null) roi = (Roi) singleTimeImp.getRoi().clone();
 				
 				// Do Z separately, maybe
 				ImagePlus[] zImages = Utils.cropSlices(singleTimeImp, roi, doSeparateZ);
@@ -314,6 +315,8 @@ public class JACoP_B implements PlugIn {
 		if(doOverlap) ic.Overlap();
 		if(doICA) ic.ICA();
 		if(doFluorogram) ic.CytoFluo();
+		// Add Areas
+		ic.Areas();
 		
 		// Define rows and columns here in case we want a vertical report
 		int rows = 3;
@@ -537,6 +540,3 @@ public class JACoP_B implements PlugIn {
 		IJ.run("JACoP B", "");
     }
 }
-
-
-

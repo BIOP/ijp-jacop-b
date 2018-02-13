@@ -1,14 +1,11 @@
 package ch.epfl.biop.coloc.utils;
 
 import java.awt.Color;
-import java.awt.image.IndexColorModel;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Plot;
 import ij.gui.Roi;
 import ij.plugin.Thresholder;
-import ij.process.BinaryProcessor;
 import ij.process.Blitter;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
