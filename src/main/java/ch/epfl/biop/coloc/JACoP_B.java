@@ -24,11 +24,14 @@
  *
 */
 
+package ch.epfl.biop.coloc;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import ij.Prefs;
 import ch.epfl.biop.coloc.utils.ImageColocalizer;
 import ch.epfl.biop.coloc.utils.Utils;
 import ch.epfl.biop.montage.StackMontage;
@@ -49,6 +52,9 @@ import ij.plugin.frame.RoiManager;
 
 public class JACoP_B implements PlugIn {
     
+	private static final String PREFIX = "jacop.b.";
+	// If no images, dialog with folder otherwise normal dialog
+	int nImages;
 	int channelA, channelB;
 	
 	ImagePlus impA, impB;
@@ -93,16 +99,26 @@ public class JACoP_B implements PlugIn {
 	
 	@Override
 	public void run(String arg) {
-		
+		nImages = WindowManager.getImageCount();
 		if (!mainDialog()) return;
 	
-		// Make some sense of it all
-		
 		//Switch from folder to single image mode			
-		// Setup the image and all settings
-		this.imp = IJ.getImage();
-		runColoc();
-			
+		//Setup the image and all settings
+		
+		
+		if (this.imageFolder != null) {
+			// Run coloc for a folder
+			String[] files = imageFolder.list();
+			for(String file : files) {
+				this.imp = IJ.openImage(new File(this.imageFolder, file).getAbsolutePath());
+				runColoc();
+
+			}
+		} else {
+			this.imp = IJ.getImage();
+			imp.
+			runColoc();
+		}
 	}
 	
 
@@ -412,9 +428,34 @@ public class JACoP_B implements PlugIn {
 	}
 
 	private Boolean mainDialog() {
-		// If no images, dialog with folder otherwise normal dialog
-		int nImages = WindowManager.getImageCount();
 		
+		// Pick up the data
+		if (nImages == 0) imageFolder = new File(Prefs.get(PREFIX+"imagefolder", ""));
+		
+		channelA = Prefs.getInt(PREFIX+"channelA", 1);
+		channelB = Prefs.getInt(PREFIX+"channelB", 1);
+		
+		thrA = Prefs.get(PREFIX+"thrA", "Otsu");
+		thrB = Prefs.get(PREFIX+"thrB", "Otsu");
+
+		mThrA = Prefs.getInt(PREFIX+"mThrA", 0);
+		mThrB = Prefs.getInt(PREFIX+"mThrB", 0);
+
+
+		doCropRois = Prefs.get(PREFIX+"doCropRois", false);
+		doSeparateZ = Prefs.get(PREFIX+"doSeparateZ", false);
+		is_stack_hist_z = Prefs.get(PREFIX+"is_stack_hist_z", false);
+		
+		doPearsons = Prefs.get(PREFIX+"doPearsons", false);
+		doManders = Prefs.get(PREFIX+"doManders", false);
+		doOverlap = Prefs.get(PREFIX+"doOverlap", false);
+		doICA = Prefs.get(PREFIX+"doICA", false);
+		doFluorogram = Prefs.get(PREFIX+"doFluorogram", false);
+		is_montage_vertical = Prefs.get(PREFIX+"is_montage_vertical", false);
+		doCostesRand = Prefs.get(PREFIX+"doCostesRand", false);
+
+		use_advanced = Prefs.get(PREFIX+"use_advanced", false);
+
 		// Make the GUI, old school
 		GenericDialogPlus d = new GenericDialogPlus("Colocalization Parameters");
 		
@@ -484,6 +525,34 @@ public class JACoP_B implements PlugIn {
 		
 		use_advanced = d.getNextBoolean();
 		
+		
+		// Save the data
+		if( imageFolder != null) Prefs.set(PREFIX+"imagefolder", imageFolder.getAbsolutePath());
+		
+		Prefs.set(PREFIX+"channelA", channelA);
+		Prefs.set(PREFIX+"channelB", channelB);
+		
+		Prefs.set(PREFIX+"thrA", thrA);
+		Prefs.set(PREFIX+"thrB", thrB);
+
+		Prefs.set(PREFIX+"mThrA", mThrA);
+		Prefs.set(PREFIX+"mThrB", mThrB);
+
+
+		Prefs.set(PREFIX+"doCropRois", doCropRois);
+		Prefs.set(PREFIX+"doSeparateZ", doSeparateZ);
+		Prefs.set(PREFIX+"is_stack_hist_z", is_stack_hist_z);
+		
+		Prefs.set(PREFIX+"doPearsons", doPearsons);
+		Prefs.set(PREFIX+"doManders", doManders);
+		Prefs.set(PREFIX+"doOverlap", doOverlap);
+		Prefs.set(PREFIX+"doICA", doICA);
+		Prefs.set(PREFIX+"doFluorogram", doFluorogram);
+		Prefs.set(PREFIX+"is_montage_vertical", is_montage_vertical);
+		Prefs.set(PREFIX+"doCostesRand", doCostesRand);
+
+		Prefs.set(PREFIX+"use_advanced", use_advanced);		
+		
 		if(use_advanced) {
 			return advancedDialog();
 		}
@@ -496,7 +565,13 @@ public class JACoP_B implements PlugIn {
     
     private Boolean advancedDialog() {
 		// Advanced features, like Fluorogram bins
-		GenericDialogPlus d = new GenericDialogPlus("Advanced Parameters");
+		is_auto_fluo = Prefs.get(PREFIX+"is_auto_fluo", is_auto_fluo);
+		fluo_bins = Prefs.getInt(PREFIX+"channelA", fluo_bins);
+		fluo_min = Prefs.getInt(PREFIX+"channelA", fluo_min);
+		fluo_max = Prefs.getInt(PREFIX+"channelA", fluo_max);
+
+		
+    	GenericDialogPlus d = new GenericDialogPlus("Advanced Parameters");
     	d.addCheckbox("Auto-Adjust Fluorogram Per Image", true);
     	d.addMessage("Otherwise, use parameters below");
     	d.addNumericField("Fluorogram_Bins", 256, 0);
@@ -512,6 +587,12 @@ public class JACoP_B implements PlugIn {
 		fluo_bins = (int) d.getNextNumber();
 		fluo_min  = (int) d.getNextNumber();
 		fluo_max  = (int) d.getNextNumber();
+		
+		Prefs.set(PREFIX+"is_auto_fluo", is_auto_fluo);
+		Prefs.set(PREFIX+"channelA", fluo_bins);
+		Prefs.set(PREFIX+"channelA", fluo_min);
+		Prefs.set(PREFIX+"channelA", fluo_max);
+		
 
 		return true;
 	}

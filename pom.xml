@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>19.2.0</version>
+		<version>14.0.0</version>
 		<relativePath />
 	</parent>
-
+	
 	<groupId>ch.epfl.biop.coloc</groupId>
-	<version>1.0.1</version>
+	<version>1.1.0</version>
 
 	<name>JACoP_B</name>
 	<url>http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:jacop_2.0:just_another_colocalization_plugin:start</url>
@@ -102,7 +102,7 @@
 	</scm>
 	<issueManagement>
 		<system>none</system>
-		<url>https://google.com</url>
+		<url>N/A</url>
 	</issueManagement>
 	<ciManagement>
 		<system>none</system>
@@ -148,6 +148,10 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-lib</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-ij</artifactId>
 		</dependency>
 	</dependencies>
 	<artifactId>JACoP_B</artifactId>
