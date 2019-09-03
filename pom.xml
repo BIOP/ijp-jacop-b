@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>14.0.0</version>
+		<version>27.0.1</version>
 		<relativePath />
 	</parent>
 	
 	<groupId>ch.epfl.biop.coloc</groupId>
-	<version>1.1.0</version>
+	<version>1.1.1-SNAPSHOT</version>
 
 	<name>JACoP_B</name>
 	<url>http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:jacop_2.0:just_another_colocalization_plugin:start</url>
@@ -70,6 +70,14 @@
 				<role>support</role>
 			</roles>
 		</developer>
+		<developer>
+			<id>chiarutt</id>
+			<name>Nicolas Chiaruttini</name>
+			<url>http://biop.epfl.ch/INFO_Facility.html#staff</url>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
 	</developers>
 	<contributors>
 		<contributor>
@@ -114,6 +122,7 @@
 		<license.copyrightOwners>Susanne Bolte, Fabrice P. Cordelières, Olivier Burri</license.copyrightOwners>
 		<imagej.app.directory>C:/Fiji/</imagej.app.directory>
 		<main-class>ch.epfl.biop.coloc.JACoP_B</main-class>
+		<package-name>ch.epfl.biop.coloc</package-name>
 	</properties>
 
 	<repositories>
@@ -137,8 +146,7 @@
 		<dependency>
 		  <groupId>ch.epfl.biop.montage</groupId>
 		  <artifactId>Multi_Stack_Montage</artifactId>
-		  <version>1.1.0</version>
-		  <scope>provided</scope>
+		  <version>1.1.1-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>

@@ -116,7 +116,7 @@ public class JACoP_B implements PlugIn {
 			}
 		} else {
 			this.imp = IJ.getImage();
-			imp.
+			//imp.
 			runColoc();
 		}
 	}
@@ -423,7 +423,7 @@ public class JACoP_B implements PlugIn {
 		// Make sure it's the title we want.
 		montage.setTitle(imageName+" Report");
 		
-		// And VIOLA
+		// And VOILA
 		return montage;
 	}
 
