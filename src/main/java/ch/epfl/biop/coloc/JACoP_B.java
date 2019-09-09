@@ -74,10 +74,10 @@ public class JACoP_B implements PlugIn {
 	File imageFolder = null;
 	
 	Boolean doSeparateZ;
+
 	Boolean doCropRois;
 	
 	Boolean hasRoiSets = false;
-	
 	
 	ImagePlus imp=null;
 
@@ -89,12 +89,14 @@ public class JACoP_B implements PlugIn {
 
 	private boolean is_montage_vertical;
 
-
 	private boolean use_advanced;
 
 	private boolean is_auto_fluo = true;
+
 	private int fluo_bins = 256;
+
 	private int fluo_min=0;
+
 	private int fluo_max=255;
 	
 	@Override
@@ -120,7 +122,6 @@ public class JACoP_B implements PlugIn {
 			runColoc();
 		}
 	}
-	
 
 	/*
 	 * As it currently stands, the ImageColocalizer will do a coloc analysis of
@@ -209,8 +210,7 @@ public class JACoP_B implements PlugIn {
 				
 				int thrAH = 0;
 				int thrBH = 0;
-				
-				
+
 				// Little Hacky: Make sure to get the right thresholds if we are working on the stack histogram...
 				// We need to initialize ImageColocalizer, get the thresholds and save them
 				if(is_stack_hist_z) {
@@ -254,8 +254,7 @@ public class JACoP_B implements PlugIn {
 						// Normally there would only be the line below
 						zImages[i].setRoi(roi);
 					}
-					
-					
+
 					// Run some magic
 					ic = new ImageColocalizer( zImages[i], channelA, channelB);
 					
@@ -319,8 +318,6 @@ public class JACoP_B implements PlugIn {
 	 		i.show();
 	 	}
 	}
-	
-	
 
 	/*
 	 * This method actually runs the analysis and outputs a pretty report
@@ -522,7 +519,6 @@ public class JACoP_B implements PlugIn {
 		doFluorogram = d.getNextBoolean();
 		is_montage_vertical = d.getNextBoolean();
 		doCostesRand = d.getNextBoolean();
-		
 		use_advanced = d.getNextBoolean();
 		
 		
@@ -556,13 +552,9 @@ public class JACoP_B implements PlugIn {
 		if(use_advanced) {
 			return advancedDialog();
 		}
-		
 		return true;
     }
-	
-	
-    
-    
+
     private Boolean advancedDialog() {
 		// Advanced features, like Fluorogram bins
 		is_auto_fluo = Prefs.get(PREFIX+"is_auto_fluo", is_auto_fluo);
@@ -570,7 +562,6 @@ public class JACoP_B implements PlugIn {
 		fluo_min = Prefs.getInt(PREFIX+"channelA", fluo_min);
 		fluo_max = Prefs.getInt(PREFIX+"channelA", fluo_max);
 
-		
     	GenericDialogPlus d = new GenericDialogPlus("Advanced Parameters");
     	d.addCheckbox("Auto-Adjust Fluorogram Per Image", true);
     	d.addMessage("Otherwise, use parameters below");
@@ -592,11 +583,9 @@ public class JACoP_B implements PlugIn {
 		Prefs.set(PREFIX+"channelA", fluo_bins);
 		Prefs.set(PREFIX+"channelA", fluo_min);
 		Prefs.set(PREFIX+"channelA", fluo_max);
-		
 
 		return true;
 	}
-
 
 	public static void main(String[] args) {     
 		// set the plugins.dir property to make the plugin appear in the Plugins menu
@@ -609,20 +598,18 @@ public class JACoP_B implements PlugIn {
 		ij.exitWhenQuitting(true);
 		
 		// Make some nice images
-		//ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/confocal-series.zip");
-		//imp.show();
 	//	ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
-	//	ImagePlus imp = IJ.openImage("F:\\People\\Nadine Schmidt\\20170712_KN35_IF_A1_2_LUT_BC.tif");
-		
-	//	ImagePlus imp = IJ.openImage("E:\\JACOP\\20170816_KN47_IF_B1_2_LUT_BC.tif");
 		ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
-		//IJ.setTool("freehand");
-		//IJ.setTool("polygon");
 		int[] xpoints = {264,139,89,203,331,322,190};
 		int[] ypoints = {114,118,230,269,265,153,178};
 		imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));
 		imp.show();
 
-		IJ.run("JACoP B", "");
+		// Allow to work within an IDE - IJ1 Style
+		JACoP_B jb = new JACoP_B();
+		jb.run("");
+
+		// Does not work directly within an IDE
+		//IJ.run("JACoP B", "");
     }
 }

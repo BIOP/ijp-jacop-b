@@ -29,8 +29,6 @@ public class ColocOutput {
 	 * 
 	 * Offer possibility to montage whatever we need
 	 */
-	
-	
 
 	public static ImagePlus Fluorogram(Plot fp, ImagePlus impA, ImagePlus impB, int min, int max, int thrA, int thrB) {
 

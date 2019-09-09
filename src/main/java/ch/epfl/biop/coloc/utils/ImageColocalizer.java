@@ -214,8 +214,6 @@ public class ImageColocalizer {
     }*/
     
     public void Overlap(){
-
-        
     	double num=0;
         double numThr=0;
         double den1=0;
@@ -259,24 +257,33 @@ public class ImageColocalizer {
      * Measures the area above the thresholds on both channels as well as the overlap
      */
     public void Areas() {
+
     	double AA=0, AB=0, AAB = 0;
+    	double totalPix = 0;
     	
     	for (int i=0; i<this.length; i++){
     		if (this.A[i]>thrA) { AA++; }
     		if (this.B[i]>thrB) { AB++;	}
     		if (this.A[i]>thrA && this.B[i]>thrB) { AAB++;}
+    		totalPix++;
     	}
         
     	// Calibrate
+        totalPix*=Math.pow(impA.getCalibration().pixelWidth,2);
     	AA*=Math.pow(impA.getCalibration().pixelWidth,2);
     	AB*=Math.pow(impA.getCalibration().pixelWidth,2);
     	AAB*=Math.pow(impA.getCalibration().pixelWidth,2);
     	
-        IJ.log("\nArea Measurements ("+impA.getCalibration().getXUnit()+")\n Area A="+round(AA,0)+"Area B="+round(AB,0)+
+        IJ.log(
+                "\nArea ROI ("+impA.getCalibration().getXUnit()+") Area tot = "+round(totalPix,0)+
+                "\nArea Measurements ("+impA.getCalibration().getXUnit()+")\n Area A="+round(AA,0)+"Area B="+round(AB,0)+
         		"\n Area Overlap="+round(AAB,0));
-    	rt.addValue("Area A", AA);
+        rt.addValue("Area tot", totalPix);
+        rt.addValue("Area A", AA);
         rt.addValue("Area B", AB);
         rt.addValue("Area Overlap", AAB);
+
+
     }
     
     /*
@@ -841,7 +848,7 @@ public class ImageColocalizer {
          mean+=arrayR[f];
          arrayDistribR[(int)((arrayR[f]+1)/binWidth)]++;
          x[(int)((arrayR[f]+1)/binWidth)]+=arrayR[f];
-         IJ.showStatus("Costes' randomization loop n�"+f+"/"+nbRand);
+         IJ.showStatus("Costes' randomization loop n"+f+"/"+nbRand);
          }
          
          //Draw the last randomized image, if required
