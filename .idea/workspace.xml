@@ -2,9 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4e63a675-a62d-449d-9be1-25019efb4dde" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/JACoP_B.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/JACoP_B.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ColocOutput.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ColocOutput.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ImageColocalizer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ImageColocalizer.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
@@ -16,8 +13,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="DefaultGradleProjectSettings">
-    <option name="testRunner" value="GRADLE" />
-    <option name="delegatedBuild" value="true" />
+    <option name="isMigrated" value="true" />
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
@@ -45,8 +41,27 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ImageColocalizer.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="379">
-              <caret line="262" column="8" lean-forward="true" selection-start-line="262" selection-start-column="8" selection-end-line="262" selection-end-column="8" />
+            <state relative-caret-position="510">
+              <caret line="145" column="96" selection-start-line="145" selection-start-column="96" selection-end-line="145" selection-end-column="96" />
+              <folding>
+                <element signature="e#10745#15790#0" />
+                <element signature="e#15800#20556#0" />
+                <element signature="e#20566#21836#0" />
+                <element signature="e#21846#24339#0" />
+                <element signature="e#24349#35957#0" />
+                <element signature="e#35967#42726#0" />
+                <element signature="e#42986#43055#0" />
+                <element signature="e#43070#48063#0" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/Utils.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="580">
+              <caret line="189" column="33" selection-start-line="189" selection-start-column="33" selection-end-line="189" selection-end-column="33" />
             </state>
           </provider>
         </entry>
@@ -82,6 +97,7 @@
       <find>costesMask</find>
       <find>area a</find>
       <find>area</find>
+      <find>mask</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -258,7 +274,7 @@
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Terminal" order="7" weight="0.32969603" />
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
-      <window_info anchor="bottom" id="Version Control" order="9" />
+      <window_info anchor="bottom" id="Version Control" order="9" weight="0.32969603" />
       <window_info anchor="bottom" id="Messages" order="10" weight="0.32969603" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -317,10 +333,27 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/Utils.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="580">
+          <caret line="189" column="33" selection-start-line="189" selection-start-column="33" selection-end-line="189" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ImageColocalizer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="379">
-          <caret line="262" column="8" lean-forward="true" selection-start-line="262" selection-start-column="8" selection-end-line="262" selection-end-column="8" />
+        <state relative-caret-position="510">
+          <caret line="145" column="96" selection-start-line="145" selection-start-column="96" selection-end-line="145" selection-end-column="96" />
+          <folding>
+            <element signature="e#10745#15790#0" />
+            <element signature="e#15800#20556#0" />
+            <element signature="e#20566#21836#0" />
+            <element signature="e#21846#24339#0" />
+            <element signature="e#24349#35957#0" />
+            <element signature="e#35967#42726#0" />
+            <element signature="e#42986#43055#0" />
+            <element signature="e#43070#48063#0" />
+          </folding>
         </state>
       </provider>
     </entry>
