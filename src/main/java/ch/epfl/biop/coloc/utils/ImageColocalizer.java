@@ -1097,6 +1097,10 @@ public class ImageColocalizer {
         
     }
 
+    public void RandomCostes2D(boolean binarize) {
+        randomCostes2D(impA,impB,5,100,binarize);
+    }
+
     /**
      * Selects Blocks within ROI of size square
      * Performs Pearson correlation coefficient with these blocks, unshifted, and then by performing random shifts of the blocks (nShuffling)
@@ -1110,7 +1114,13 @@ public class ImageColocalizer {
      *
      */
     public void randomCostes2D(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean threshold) {
-
+        RandomCostes rc = new RandomCostes(imgA,imgB, squareSize, nShuffling,threshold, thrA, thrB);
+        rc.compute();
+        if (threshold) {
+            rt.addValue("Random Pearson Costes 2D (Mask)", rc.pearsonNormalized);
+        } else {
+            rt.addValue("Random Pearson Costes 2D", rc.pearsonNormalized);
+        }
     }
 
 
@@ -1274,7 +1284,6 @@ public class ImageColocalizer {
                     count++;
                 }
              }
-
              Aarraymean=sumA/count;
              Barraymean=sumB/count;
          }

@@ -63,7 +63,7 @@ public class JACoP_B implements PlugIn {
 	
 	int mThrA, mThrB;
 	
-	Boolean doCostesThr=false, doPearsons=false, doOverlap=false, doManders=false, doFluorogram=false, doICA=false, doCostesRand=false;
+	Boolean doCostesThr=false, doPearsons=false, doOverlap=false, doManders=false, doFluorogram=false, doICA=false, doCostesRand=false, doRandomCostes = false, doRandomCostesMask = false;
 	
 	Calibration calib;
 	
@@ -329,6 +329,8 @@ public class JACoP_B implements PlugIn {
 		if(doOverlap) ic.Overlap();
 		if(doICA) ic.ICA();
 		if(doFluorogram) ic.CytoFluo();
+        if(doRandomCostes) ic.RandomCostes2D(false);
+        if(doRandomCostesMask) ic.RandomCostes2D(true);
 		// Add Areas
 		ic.Areas();
 		
@@ -450,6 +452,8 @@ public class JACoP_B implements PlugIn {
 		doFluorogram = Prefs.get(PREFIX+"doFluorogram", false);
 		is_montage_vertical = Prefs.get(PREFIX+"is_montage_vertical", false);
 		doCostesRand = Prefs.get(PREFIX+"doCostesRand", false);
+        doRandomCostes = Prefs.get(PREFIX+"doRandomCostes", false);
+        doRandomCostesMask = Prefs.get(PREFIX+"doRandomCostesMask", false);
 
 		use_advanced = Prefs.get(PREFIX+"use_advanced", false);
 
@@ -488,6 +492,8 @@ public class JACoP_B implements PlugIn {
 		d.addCheckbox("Report_As_Vertical_Montage", false);
 		
 		d.addCheckbox("Perform_Costes_Randomization (Not implemented)", false);
+        d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, No Threshold)", false);
+        d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, With Threshold)", false);
 		d.addCheckbox("Set Advanced Parameters", false);
 
 		
@@ -519,6 +525,8 @@ public class JACoP_B implements PlugIn {
 		doFluorogram = d.getNextBoolean();
 		is_montage_vertical = d.getNextBoolean();
 		doCostesRand = d.getNextBoolean();
+        doRandomCostes = d.getNextBoolean();
+        doRandomCostesMask = d.getNextBoolean();
 		use_advanced = d.getNextBoolean();
 		
 		
@@ -546,6 +554,9 @@ public class JACoP_B implements PlugIn {
 		Prefs.set(PREFIX+"doFluorogram", doFluorogram);
 		Prefs.set(PREFIX+"is_montage_vertical", is_montage_vertical);
 		Prefs.set(PREFIX+"doCostesRand", doCostesRand);
+
+        Prefs.set(PREFIX+"doRandomCostes", doRandomCostes);
+        Prefs.set(PREFIX+"doRandomCostesMask", doRandomCostesMask);
 
 		Prefs.set(PREFIX+"use_advanced", use_advanced);		
 		
@@ -599,7 +610,8 @@ public class JACoP_B implements PlugIn {
 		
 		// Make some nice images
 	//	ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
-		ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
+		// ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
+         ImagePlus imp = IJ.openImage("C:\\Users\\chiarutt\\Desktop\\confocal-series-test.tif");
 		int[] xpoints = {264,139,89,203,331,322,190};
 		int[] ypoints = {114,118,230,269,265,153,178};
 		imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));

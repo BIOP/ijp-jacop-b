@@ -161,6 +161,11 @@
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-ij</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-math3</artifactId>
+			<!-- <version>3.6.1</version> -->
+		</dependency>
 	</dependencies>
 	<artifactId>JACoP_B</artifactId>
 	<description>An update to the JACoP Plugin that helps in the management of ROIs, Z sections and helps generate cleaner reports</description>
