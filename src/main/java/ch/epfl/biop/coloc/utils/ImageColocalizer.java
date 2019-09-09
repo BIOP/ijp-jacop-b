@@ -52,7 +52,7 @@ import ij.process.ShortProcessor;
 public class ImageColocalizer {
     int width, height, nbSlices, depth, length, widthCostes, heightCostes, nbsliceCostes, lengthCostes;
     String titleA, titleB;
-    int[] A, B;
+    int[] A, B, M; // M for Mask
     int Amin, Amax, Bmin, Bmax;
     double Amean, Bmean;
     Calibration cal, micronCal;
@@ -113,9 +113,9 @@ public class ImageColocalizer {
     }
 
 
-    double totalNumberPixInRoi = 0;
+    //double totalNumberPixInRoi = 0;
     
-    /*
+    /**
      * This method sets up the ROIs and the data for each image that is given.
      */
 	public void setup(ImagePlus oipA, ImagePlus oipB, Calibration cal) {
@@ -138,14 +138,14 @@ public class ImageColocalizer {
     		ImageProcessor tip = oipA.getProcessor();
     		tip.setRoi(roi);
     		mask = Utils.getMask(impA, roi);
-
+/*
     		// Computes total area in ROI
     		totalNumberPixInRoi = mask.getStatistics().area;
     		// Multiply by the number of Slices
     		totalNumberPixInRoi*= impA.getNSlices();
     		// Multiply by the appropriate pixel area size calibration (z voxel size is ignored)
             totalNumberPixInRoi*=Math.pow(impA.getCalibration().pixelWidth,2);
-
+*/
     		// Clear outside for both
     		for(int i = 1; i<=impA.getNSlices(); i++) {
     			//impA.getStack().getProcessor(i).fillOutside(roi);
@@ -179,6 +179,7 @@ public class ImageColocalizer {
         this.length=this.width*this.height*this.nbSlices;
         this.A=new int[this.length];
         this.B=new int[this.length];
+        this.M=new int[this.length];
         this.titleA=impA.getTitle();
         this.titleB=impB.getTitle();
         this.cal=cal;
@@ -189,7 +190,7 @@ public class ImageColocalizer {
         this.micronCal.pixelWidth/=1000;
         this.micronCal.setUnit("um");
         
-        buildArray(impA, impB);
+        buildArray(impA, impB, mask);
         
         IJ.log("**************************************************\nImage A: "+this.titleA+"\nImage B: "+this.titleB);
         
@@ -266,31 +267,32 @@ public class ImageColocalizer {
     public void Areas() {
 
     	double AA=0, AB=0, AAB = 0;
-    	//double totalPix = 0;
+    	double totalPix = 0;
     	
     	for (int i=0; i<this.length; i++){
     		if (this.A[i]>thrA) { AA++; }
     		if (this.B[i]>thrB) { AB++;	}
     		if (this.A[i]>thrA && this.B[i]>thrB) { AAB++;}
+    		if (this.M[i]>0) {totalPix++;}
     	}
         
     	// Calibrate
-        // totalPix*=Math.pow(impA.getCalibration().pixelWidth,2);
+        totalPix*=Math.pow(impA.getCalibration().pixelWidth,2);
     	AA*=Math.pow(impA.getCalibration().pixelWidth,2);
     	AB*=Math.pow(impA.getCalibration().pixelWidth,2);
     	AAB*=Math.pow(impA.getCalibration().pixelWidth,2);
     	
         IJ.log(
-                "\nArea ROI ("+impA.getCalibration().getXUnit()+") Area tot = "+round(this.totalNumberPixInRoi,0)+
+                "\nArea ROI ("+impA.getCalibration().getXUnit()+") Area tot = "+round(totalPix,0)+
                 "\nArea Measurements ("+impA.getCalibration().getXUnit()+")\n Area A="+round(AA,0)+"Area B="+round(AB,0)+
         		"\n Area Overlap="+round(AAB,0));
-        rt.addValue("Area tot", this.totalNumberPixInRoi);
+        rt.addValue("Area tot", totalPix);
         rt.addValue("Area A", AA);
         rt.addValue("Area B", AB);
         rt.addValue("Area Overlap", AAB);
     }
     
-    /*
+    /**
      * Manders Coefficients
      * Calculation logic was untouched by OB
      */
@@ -1095,7 +1097,6 @@ public class ImageColocalizer {
         
     }
 
-
     /**
      * Selects Blocks within ROI of size square
      * Performs Pearson correlation coefficient with these blocks, unshifted, and then by performing random shifts of the blocks (nShuffling)
@@ -1105,8 +1106,10 @@ public class ImageColocalizer {
      * For instance pcc_normalized = +2 means the two channels are correlated, two sigmas away from randomness
      * Warns if not enough shuffling possibilities are available
      *
+     * Threshold means the randomization is done with the thresholded images or not
+     *
      */
-    public void randomCostes2D(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling) {
+    public void randomCostes2D(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean threshold) {
 
     }
 
@@ -1209,7 +1212,7 @@ public class ImageColocalizer {
     }
     
     //----------------------------------------------------------------------------------------------------------------------------------------------
-    private void buildArray(ImagePlus imgA, ImagePlus imgB){
+    private void buildArray(ImagePlus imgA, ImagePlus imgB, ImageProcessor imgMask){
         int index=0;
         this.Amin=(int) Math.pow(2, this.depth);
         this.Amax=0;
@@ -1237,6 +1240,7 @@ public class ImageColocalizer {
                 for (int x=0; x<this.width; x++){
                     this.A[index]=imgA.getProcessor().getPixel(x,y);
                     this.B[index]=imgB.getProcessor().getPixel(x,y);
+                    this.M[index]=imgMask.getPixel(x,y);
                     index++;
                 }
             }
@@ -1262,7 +1266,7 @@ public class ImageColocalizer {
              Aarraymean=0;
              Barraymean=0;
              for (int m=0; m<Aarray.length; m++){
-                if (Aarray[m]>=TA && Barray[m]>=TB){
+                if ((Aarray[m]>=TA && Barray[m]>=TB)&&(M[m]>0)){
                     sumA+=Aarray[m];
                     sumB+=Barray[m];
                     sumAB+=Aarray[m]*Barray[m];
@@ -1276,7 +1280,7 @@ public class ImageColocalizer {
          }
          
          for (int m=0; m<Aarray.length; m++){
-            if (Aarray[m]>=TA && Barray[m]>=TB){
+            if ((Aarray[m]>=TA && Barray[m]>=TB)&&(M[m]>0)){
                 num+=(Aarray[m]-Aarraymean)*(Barray[m]-Barraymean);
                 den1+=Math.pow((Aarray[m]-Aarraymean), 2);
                 den2+=Math.pow((Barray[m]-Barraymean), 2);
