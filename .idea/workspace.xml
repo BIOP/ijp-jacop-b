@@ -2,11 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4e63a675-a62d-449d-9be1-25019efb4dde" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/RandomCostes.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/JACoP_B.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/JACoP_B.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ImageColocalizer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ImageColocalizer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/RandomCostes.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/RandomCostes.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
@@ -33,10 +31,12 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/JACoP_B.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="922">
-              <caret line="624" column="32" lean-forward="true" selection-start-line="624" selection-start-column="32" selection-end-line="624" selection-end-column="32" />
+            <state relative-caret-position="393">
+              <caret line="329" column="55" selection-start-line="329" selection-start-column="55" selection-end-line="329" selection-end-column="55" />
               <folding>
                 <element signature="imports" expanded="true" />
+                <element signature="e#9543#12702#0" />
+                <element signature="e#12705#16876#0" />
               </folding>
             </state>
           </provider>
@@ -45,40 +45,39 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ImageColocalizer.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="566">
-              <caret line="1117" column="21" selection-start-line="1117" selection-start-column="21" selection-end-line="1117" selection-end-column="21" />
+            <state relative-caret-position="-289">
+              <caret line="120" column="71" selection-start-line="120" selection-start-column="71" selection-end-line="120" selection-end-column="71" />
               <folding>
-                <element signature="e#6701#8256#0" />
+                <element signature="e#3453#6638#0" />
+                <element signature="e#6647#6945#0" />
                 <element signature="e#10745#15790#0" />
                 <element signature="e#15800#20556#0" />
                 <element signature="e#24349#35957#0" />
                 <element signature="e#35967#42726#0" />
-                <element signature="e#43462#43463#0" expanded="true" />
-                <element signature="e#43515#43516#0" expanded="true" />
                 <element signature="e#43070#48063#0" />
-                <element signature="e#59196#59197#0" expanded="true" />
-                <element signature="e#59247#59248#0" expanded="true" />
-                <element signature="e#59304#59305#0" expanded="true" />
-                <element signature="e#59355#59356#0" expanded="true" />
-                <element signature="e#59416#59417#0" expanded="true" />
-                <element signature="e#59470#59471#0" expanded="true" />
-                <element signature="e#59524#59525#0" expanded="true" />
-                <element signature="e#59589#59590#0" expanded="true" />
-                <element signature="e#59657#59658#0" expanded="true" />
-                <element signature="e#59719#59720#0" expanded="true" />
-                <element signature="e#59782#59783#0" expanded="true" />
-                <element signature="e#59844#59845#0" expanded="true" />
-                <element signature="e#60231#60232#0" expanded="true" />
-                <element signature="e#60286#60287#0" expanded="true" />
-                <element signature="e#62293#62294#0" expanded="true" />
-                <element signature="e#62344#62345#0" expanded="true" />
-                <element signature="e#62796#62797#0" expanded="true" />
-                <element signature="e#62882#62883#0" expanded="true" />
-                <element signature="e#63348#63349#0" expanded="true" />
-                <element signature="e#64430#64431#0" expanded="true" />
-                <element signature="e#65053#65054#0" expanded="true" />
-                <element signature="e#65138#65139#0" expanded="true" />
-                <element signature="e#65209#65210#0" expanded="true" />
+                <element signature="e#59244#59245#0" expanded="true" />
+                <element signature="e#59295#59296#0" expanded="true" />
+                <element signature="e#59352#59353#0" expanded="true" />
+                <element signature="e#59403#59404#0" expanded="true" />
+                <element signature="e#59464#59465#0" expanded="true" />
+                <element signature="e#59518#59519#0" expanded="true" />
+                <element signature="e#59572#59573#0" expanded="true" />
+                <element signature="e#59637#59638#0" expanded="true" />
+                <element signature="e#59705#59706#0" expanded="true" />
+                <element signature="e#59767#59768#0" expanded="true" />
+                <element signature="e#59830#59831#0" expanded="true" />
+                <element signature="e#59892#59893#0" expanded="true" />
+                <element signature="e#60279#60280#0" expanded="true" />
+                <element signature="e#60334#60335#0" expanded="true" />
+                <element signature="e#62341#62342#0" expanded="true" />
+                <element signature="e#62392#62393#0" expanded="true" />
+                <element signature="e#62844#62845#0" expanded="true" />
+                <element signature="e#62930#62931#0" expanded="true" />
+                <element signature="e#63396#63397#0" expanded="true" />
+                <element signature="e#64478#64479#0" expanded="true" />
+                <element signature="e#65101#65102#0" expanded="true" />
+                <element signature="e#65186#65187#0" expanded="true" />
+                <element signature="e#65257#65258#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -87,11 +86,20 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/RandomCostes.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="512">
-              <caret line="199" column="23" selection-start-line="199" selection-start-column="23" selection-end-line="199" selection-end-column="23" />
+            <state relative-caret-position="155">
+              <caret line="130" column="40" lean-forward="true" selection-start-line="130" selection-start-column="40" selection-end-line="130" selection-end-column="40" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="jar://$MAVEN_REPOSITORY$/net/imagej/ij/1.52o/ij-1.52o-sources.jar!/ij/process/ImageProcessor.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="284">
+              <caret line="51" column="62" lean-forward="true" selection-start-line="51" selection-start-column="62" selection-end-line="51" selection-end-column="75" />
             </state>
           </provider>
         </entry>
@@ -117,7 +125,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/Utils.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="580">
+            <state relative-caret-position="445">
               <caret line="189" column="33" selection-start-line="189" selection-start-column="33" selection-end-line="189" selection-end-column="33" />
             </state>
           </provider>
@@ -163,7 +171,6 @@
       <find>costesMask</find>
       <find>area a</find>
       <find>area</find>
-      <find>mask</find>
       <find>buildArra</find>
       <find>linreg</find>
       <find>doFluorogram</find>
@@ -172,7 +179,9 @@
       <find>roimana</find>
       <find>randomcos</find>
       <find>prefs</find>
+      <find>mask</find>
       <find>binarize</find>
+      <find>println</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -339,7 +348,7 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Terminal" order="7" weight="0.32969603" />
+      <window_info anchor="bottom" id="Terminal" order="7" weight="0.32936078" />
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="9" weight="0.32969603" />
       <window_info anchor="bottom" id="Messages" order="10" weight="0.32936078" />
@@ -380,13 +389,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/Utils.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="580">
-          <caret line="189" column="33" selection-start-line="189" selection-start-column="33" selection-end-line="189" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
     <entry file="jar://$MAVEN_REPOSITORY$/net/imagej/ij/1.52o/ij-1.52o-sources.jar!/ij/gui/ShapeRoi.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-7939">
@@ -421,60 +423,75 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ImageColocalizer.java">
+    <entry file="jar://$MAVEN_REPOSITORY$/net/imagej/ij/1.52o/ij-1.52o-sources.jar!/ij/process/ImageProcessor.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="566">
-          <caret line="1117" column="21" selection-start-line="1117" selection-start-column="21" selection-end-line="1117" selection-end-column="21" />
-          <folding>
-            <element signature="e#6701#8256#0" />
-            <element signature="e#10745#15790#0" />
-            <element signature="e#15800#20556#0" />
-            <element signature="e#24349#35957#0" />
-            <element signature="e#35967#42726#0" />
-            <element signature="e#43462#43463#0" expanded="true" />
-            <element signature="e#43515#43516#0" expanded="true" />
-            <element signature="e#43070#48063#0" />
-            <element signature="e#59196#59197#0" expanded="true" />
-            <element signature="e#59247#59248#0" expanded="true" />
-            <element signature="e#59304#59305#0" expanded="true" />
-            <element signature="e#59355#59356#0" expanded="true" />
-            <element signature="e#59416#59417#0" expanded="true" />
-            <element signature="e#59470#59471#0" expanded="true" />
-            <element signature="e#59524#59525#0" expanded="true" />
-            <element signature="e#59589#59590#0" expanded="true" />
-            <element signature="e#59657#59658#0" expanded="true" />
-            <element signature="e#59719#59720#0" expanded="true" />
-            <element signature="e#59782#59783#0" expanded="true" />
-            <element signature="e#59844#59845#0" expanded="true" />
-            <element signature="e#60231#60232#0" expanded="true" />
-            <element signature="e#60286#60287#0" expanded="true" />
-            <element signature="e#62293#62294#0" expanded="true" />
-            <element signature="e#62344#62345#0" expanded="true" />
-            <element signature="e#62796#62797#0" expanded="true" />
-            <element signature="e#62882#62883#0" expanded="true" />
-            <element signature="e#63348#63349#0" expanded="true" />
-            <element signature="e#64430#64431#0" expanded="true" />
-            <element signature="e#65053#65054#0" expanded="true" />
-            <element signature="e#65138#65139#0" expanded="true" />
-            <element signature="e#65209#65210#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="284">
+          <caret line="51" column="62" lean-forward="true" selection-start-line="51" selection-start-column="62" selection-end-line="51" selection-end-column="75" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/JACoP_B.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="922">
-          <caret line="624" column="32" lean-forward="true" selection-start-line="624" selection-start-column="32" selection-end-line="624" selection-end-column="32" />
+        <state relative-caret-position="393">
+          <caret line="329" column="55" selection-start-line="329" selection-start-column="55" selection-end-line="329" selection-end-column="55" />
           <folding>
             <element signature="imports" expanded="true" />
+            <element signature="e#9543#12702#0" />
+            <element signature="e#12705#16876#0" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/ImageColocalizer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-289">
+          <caret line="120" column="71" selection-start-line="120" selection-start-column="71" selection-end-line="120" selection-end-column="71" />
+          <folding>
+            <element signature="e#3453#6638#0" />
+            <element signature="e#6647#6945#0" />
+            <element signature="e#10745#15790#0" />
+            <element signature="e#15800#20556#0" />
+            <element signature="e#24349#35957#0" />
+            <element signature="e#35967#42726#0" />
+            <element signature="e#43070#48063#0" />
+            <element signature="e#59244#59245#0" expanded="true" />
+            <element signature="e#59295#59296#0" expanded="true" />
+            <element signature="e#59352#59353#0" expanded="true" />
+            <element signature="e#59403#59404#0" expanded="true" />
+            <element signature="e#59464#59465#0" expanded="true" />
+            <element signature="e#59518#59519#0" expanded="true" />
+            <element signature="e#59572#59573#0" expanded="true" />
+            <element signature="e#59637#59638#0" expanded="true" />
+            <element signature="e#59705#59706#0" expanded="true" />
+            <element signature="e#59767#59768#0" expanded="true" />
+            <element signature="e#59830#59831#0" expanded="true" />
+            <element signature="e#59892#59893#0" expanded="true" />
+            <element signature="e#60279#60280#0" expanded="true" />
+            <element signature="e#60334#60335#0" expanded="true" />
+            <element signature="e#62341#62342#0" expanded="true" />
+            <element signature="e#62392#62393#0" expanded="true" />
+            <element signature="e#62844#62845#0" expanded="true" />
+            <element signature="e#62930#62931#0" expanded="true" />
+            <element signature="e#63396#63397#0" expanded="true" />
+            <element signature="e#64478#64479#0" expanded="true" />
+            <element signature="e#65101#65102#0" expanded="true" />
+            <element signature="e#65186#65187#0" expanded="true" />
+            <element signature="e#65257#65258#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/Utils.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="445">
+          <caret line="189" column="33" selection-start-line="189" selection-start-column="33" selection-end-line="189" selection-end-column="33" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/ch/epfl/biop/coloc/utils/RandomCostes.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="512">
-          <caret line="199" column="23" selection-start-line="199" selection-start-column="23" selection-end-line="199" selection-end-column="23" />
+        <state relative-caret-position="155">
+          <caret line="130" column="40" lean-forward="true" selection-start-line="130" selection-start-column="40" selection-end-line="130" selection-end-column="40" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>

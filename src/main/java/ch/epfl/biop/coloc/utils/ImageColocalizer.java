@@ -1097,8 +1097,8 @@ public class ImageColocalizer {
         
     }
 
-    public void RandomCostes2D(boolean binarize) {
-        randomCostes2D(impA,impB,5,100,binarize);
+    public void RandomCostes2D(boolean binarize, int squareSize, int nShuffling) {
+        randomCostes2D(impA,impB,squareSize,nShuffling,binarize);
     }
 
     /**

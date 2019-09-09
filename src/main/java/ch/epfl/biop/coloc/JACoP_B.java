@@ -98,6 +98,10 @@ public class JACoP_B implements PlugIn {
 	private int fluo_min=0;
 
 	private int fluo_max=255;
+
+
+    int costesBlockSize = 5;
+    int costesShufflingNumber = 100;
 	
 	@Override
 	public void run(String arg) {
@@ -329,8 +333,8 @@ public class JACoP_B implements PlugIn {
 		if(doOverlap) ic.Overlap();
 		if(doICA) ic.ICA();
 		if(doFluorogram) ic.CytoFluo();
-        if(doRandomCostes) ic.RandomCostes2D(false);
-        if(doRandomCostesMask) ic.RandomCostes2D(true);
+        if(doRandomCostes) ic.RandomCostes2D(false, costesBlockSize, costesShufflingNumber);
+        if(doRandomCostesMask) ic.RandomCostes2D(true, costesBlockSize, costesShufflingNumber);
 		// Add Areas
 		ic.Areas();
 		
@@ -440,6 +444,8 @@ public class JACoP_B implements PlugIn {
 		mThrA = Prefs.getInt(PREFIX+"mThrA", 0);
 		mThrB = Prefs.getInt(PREFIX+"mThrB", 0);
 
+		costesBlockSize = Prefs.getInt(PREFIX+"costesBlockSize", 0);
+		costesShufflingNumber = Prefs.getInt(PREFIX+"costesShufflingNumber", 0);
 
 		doCropRois = Prefs.get(PREFIX+"doCropRois", false);
 		doSeparateZ = Prefs.get(PREFIX+"doSeparateZ", false);
@@ -494,6 +500,8 @@ public class JACoP_B implements PlugIn {
 		d.addCheckbox("Perform_Costes_Randomization (Not implemented)", false);
         d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, No Threshold)", false);
         d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, With Threshold)", false);
+        d.addNumericField("Block Size for Costes Randomization (pixel)", 5, 0);
+        d.addNumericField("Number of shuffling for Costes Randomization", 100, 0);
 		d.addCheckbox("Set Advanced Parameters", false);
 
 		
@@ -527,6 +535,8 @@ public class JACoP_B implements PlugIn {
 		doCostesRand = d.getNextBoolean();
         doRandomCostes = d.getNextBoolean();
         doRandomCostesMask = d.getNextBoolean();
+        costesBlockSize = (int) d.getNextNumber();
+        costesShufflingNumber = (int) d.getNextNumber();
 		use_advanced = d.getNextBoolean();
 		
 		
@@ -557,6 +567,9 @@ public class JACoP_B implements PlugIn {
 
         Prefs.set(PREFIX+"doRandomCostes", doRandomCostes);
         Prefs.set(PREFIX+"doRandomCostesMask", doRandomCostesMask);
+
+        Prefs.set(PREFIX+"costesBlockSize", costesBlockSize);
+        Prefs.set(PREFIX+"costesShufflingNumber", costesShufflingNumber);
 
 		Prefs.set(PREFIX+"use_advanced", use_advanced);		
 		

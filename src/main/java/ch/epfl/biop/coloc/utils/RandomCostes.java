@@ -5,18 +5,13 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.plugin.RGBStackMerge;
+import ij.plugin.Thresholder;
+import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
-
-import java.awt.*;
 import java.util.ArrayList;
-
-
-import ij.Prefs;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.util.Collections;
-
-import ij.process.ImageStatistics;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
@@ -35,14 +30,32 @@ public class RandomCostes {
 
     public RandomCostes(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean binarize, int thrA, int thrB) {
 
-        this.imgA=imgA;
-        this.imgB=imgB;
+        this.imgA=imgA.duplicate();
+        this.imgB=imgB.duplicate();
+
+
+
         roi = imgA.getRoi();
         this.squareSize = squareSize;
         this.nShuffling=nShuffling;
         this.binarize=binarize;
 
-        if (binarize) {System.err.println("2D BIOP Random Costes with Binarization do not work yet");}
+        if (binarize) {
+            //System.err.println("2D BIOP Random Costes with Binarization do not work yet");
+            imgA.getProcessor().setThreshold(thrA,Double.MAX_VALUE,ImageProcessor.NO_LUT_UPDATE);
+            ImagePlus imgTempA = new ImagePlus();
+            imgTempA.setProcessor(imgA.getProcessor().createMask());
+            imgA = imgTempA;
+
+            imgB.getProcessor().setThreshold(thrB,Double.MAX_VALUE,ImageProcessor.NO_LUT_UPDATE);
+            ImagePlus imgTempB = new ImagePlus();
+            imgTempB.setProcessor(imgB.getProcessor().createMask());
+            imgB = imgTempB;
+
+
+        }
+        //imgA.show();
+        //imgB.show();
 
         imp_orig = RGBStackMerge.mergeChannels(new ImagePlus[]{imgA,imgB},true);
         //imp_orig.show();
@@ -71,7 +84,7 @@ public class RandomCostes {
 
         int nRect = 0;
 
-        //RoiManager rm=RoiManager.getRoiManager();
+        RoiManager rm=RoiManager.getRoiManager();
 
         int nBlocks=0;
 
@@ -83,7 +96,7 @@ public class RandomCostes {
                 Rectangle r = new Rectangle(x,y,squareSize, squareSize);
                 if (sroi.getShape().contains(r)) {
 
-                    // rm.addRoi(new Roi(x+sroi.getXBase(),y+sroi.getYBase(),squareSize, squareSize)); // Uncomment to vizualize blocks
+                    rm.addRoi(new Roi(x+sroi.getXBase(),y+sroi.getYBase(),squareSize, squareSize)); // Uncomment to vizualize blocks
                     // Copy block to stack
                     //imp.setC(0);
                     imgA.setRoi((int) (x+sroi.getXBase()),(int) (y+sroi.getYBase()),squareSize, squareSize);
@@ -119,13 +132,13 @@ public class RandomCostes {
         double im2Avg = getMean(impCH2);
         double im3Avg = im1Avg+im2Avg;
 
-        System.out.println("im1Avg "+im1Avg);
+        /*System.out.println("im1Avg "+im1Avg);
         System.out.println("im2Avg "+im2Avg);
-        System.out.println("im3Avg "+im3Avg);
+        System.out.println("im3Avg "+im3Avg);*/
 
         double pearson = getPearson(impCH1, impCH2, im1Avg, im2Avg, im3Avg);
 
-        System.out.println("pearson= "+pearson );
+        //System.out.println("pearson= "+pearson );
 
         // Normal indexes
         ArrayList<Integer> blockIndexes = new ArrayList<>();
@@ -168,7 +181,7 @@ public class RandomCostes {
             }
 
             double value = getPearson(impCH1, impCH2Shuffled, im1Avg, im2Avg, im3Avg);
-            System.out.println(value);
+            //System.out.println(value);
 
             if (value>pearson) {
                 nAbove=nAbove+1;
@@ -199,8 +212,8 @@ public class RandomCostes {
 
         // Restores ROI
 
-        imgA.setRoi(roi);
-        imgB.setRoi(roi);
+        //imgA.setRoi(roi);
+        //imgB.setRoi(roi);
 
         imp.changes=false;
         imp.close();
