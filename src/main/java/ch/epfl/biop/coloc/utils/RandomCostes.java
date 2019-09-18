@@ -5,8 +5,6 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.plugin.RGBStackMerge;
-import ij.plugin.Thresholder;
-import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import java.util.ArrayList;
 import java.awt.Rectangle;
@@ -72,19 +70,11 @@ public class RandomCostes {
         ImagePlus imp = imp_orig.duplicate();
         imp.setRoi(roi);
 
-
-        //Roi rect = new Roi(0,0,squareSize, squareSize);
-
         ShapeRoi sroi = new ShapeRoi(roi);
-        //ShapeRoi srect = new ShapeRoi(rect);
 
         Shape shape = sroi.getShape();
 
         Rectangle bounds = shape.getBounds();
-
-        int nRect = 0;
-
-        RoiManager rm=RoiManager.getRoiManager();
 
         int nBlocks=0;
 
@@ -96,7 +86,7 @@ public class RandomCostes {
                 Rectangle r = new Rectangle(x,y,squareSize, squareSize);
                 if (sroi.getShape().contains(r)) {
 
-                    rm.addRoi(new Roi(x+sroi.getXBase(),y+sroi.getYBase(),squareSize, squareSize)); // Uncomment to vizualize blocks
+                    //rm.addRoi(new Roi(x+sroi.getXBase(),y+sroi.getYBase(),squareSize, squareSize)); // Uncomment to vizualize blocks
                     // Copy block to stack
                     //imp.setC(0);
                     imgA.setRoi((int) (x+sroi.getXBase()),(int) (y+sroi.getYBase()),squareSize, squareSize);
@@ -117,16 +107,6 @@ public class RandomCostes {
                 }
             }
         }
-
-
-        //impCH1.show();
-
-        //impCH2.show();
-
-        //impCH1.setSlice(nBlocks+1);
-        //IJ.run(impCH1, "Delete Slice", "");
-        //impCH2.setSlice(nBlocks+1);
-        //IJ.run(impCH2, "Delete Slice", "");
 
         double im1Avg = getMean(impCH1);
         double im2Avg = getMean(impCH2);
@@ -192,24 +172,6 @@ public class RandomCostes {
         double shufflingMean = (sum/(double)nShuffling);
         double shufflingStd = sd.getResult();
         pearsonNormalized = (pearson-shufflingMean) / shufflingStd;
-
-        //imp_orig.setRoi(roi);
-        //imp_orig.setRoi(roi);
-        //IJ.run("Remove Overlay", "");
-
-        //imp.setC(0);
-        //ImageStatistics stat = imp.getStatistics();
-        //double avgIntCh1 = im1Avg; //stat.mean
-
-        //imp.setC(1);
-        //stat = imp.getStatistics();
-        //double avgIntCh2 = im2Avg; //stat.mean
-        //double area = stat.area;
-
-        // Restores ROI
-
-        //imgA.setRoi(roi);
-        //imgB.setRoi(roi);
 
         imp.changes=false;
         imp.close();
