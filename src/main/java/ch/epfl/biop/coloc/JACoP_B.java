@@ -64,7 +64,9 @@ public class JACoP_B implements PlugIn {
 	int mThrA, mThrB;
 	
 	Boolean doCostesThr=false, doPearsons=false, doOverlap=false, doManders=false, doFluorogram=false, doICA=false, doCostesRand=false, doRandomCostes = false, doRandomCostesMask = false;
-	
+
+	Integer randCostesBlockSize, randCostesShuffleNumber;
+
 	Calibration calib;
 	
 	int xyBlock, zBlock, nbRand, fitMeth;
@@ -461,6 +463,9 @@ public class JACoP_B implements PlugIn {
         doRandomCostes = Prefs.get(PREFIX+"doRandomCostes", false);
         doRandomCostesMask = Prefs.get(PREFIX+"doRandomCostesMask", false);
 
+		randCostesBlockSize = Prefs.getInt(PREFIX+"randCostesBlockSize", 5);
+		randCostesShuffleNumber = Prefs.getInt(PREFIX+"randCostesShuffleNumber", 100);
+
 		use_advanced = Prefs.get(PREFIX+"use_advanced", false);
 
 		// Make the GUI, old school
@@ -483,26 +488,26 @@ public class JACoP_B implements PlugIn {
 		d.addNumericField("Manual_Threshold_A", 0, 0);
 		d.addNumericField("Manual_Threshold_B", 0, 0);
 
-		d.addCheckbox("Crop_ROIs", true);
+		d.addCheckbox("Crop_ROIs", doCropRois);
 
-		d.addCheckbox("Consider_Z_Slices_Separately", false);
-		d.addCheckbox("Set_Auto_Thresholds_On_Stack_Histogram", true);
+		d.addCheckbox("Consider_Z_Slices_Separately", doSeparateZ);
+		d.addCheckbox("Set_Auto_Thresholds_On_Stack_Histogram", is_stack_hist_z);
 		
 		d.addMessage("Colocalization Result Options");
 		
-		d.addCheckbox("Get_Pearsons Correlation", true);
-		d.addCheckbox("Get_Manders Coefficients", true);
-		d.addCheckbox("Get_Overlap Coefficients", true);
-		d.addCheckbox("Get_Li_ICA", true);
-		d.addCheckbox("Get_Fluorogram", true);
-		d.addCheckbox("Report_As_Vertical_Montage", false);
+		d.addCheckbox("Get_Pearsons Correlation", doPearsons);
+		d.addCheckbox("Get_Manders Coefficients", doManders);
+		d.addCheckbox("Get_Overlap Coefficients", doOverlap);
+		d.addCheckbox("Get_Li_ICA", doICA);
+		d.addCheckbox("Get_Fluorogram", doFluorogram);
+		d.addCheckbox("Report_As_Vertical_Montage", is_montage_vertical);
 		
-		d.addCheckbox("Perform_Costes_Randomization (Not implemented)", false);
-        d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, No Threshold)", false);
-        d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, With Threshold)", false);
-        d.addNumericField("Block Size for Costes Randomization (pixel)", 5, 0);
-        d.addNumericField("Number of shuffling for Costes Randomization", 100, 0);
-		d.addCheckbox("Set Advanced Parameters", false);
+		d.addCheckbox("Perform_Costes_Randomization (Not implemented)", doCostesRand);
+        d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, No Threshold)", doRandomCostes);
+        d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, With Threshold)", doRandomCostesMask);
+        d.addNumericField("Block Size for Costes Randomization (pixel)", randCostesBlockSize, 0);
+        d.addNumericField("Number of shuffling for Costes Randomization", randCostesShuffleNumber, 0);
+		d.addCheckbox("Set Advanced Parameters", use_advanced);
 
 		
 		//d.addChoiceMessage("Report Choice");
@@ -570,6 +575,9 @@ public class JACoP_B implements PlugIn {
 
         Prefs.set(PREFIX+"costesBlockSize", costesBlockSize);
         Prefs.set(PREFIX+"costesShufflingNumber", costesShufflingNumber);
+
+		Prefs.set(PREFIX+"randCostesBlockSize", randCostesBlockSize);
+		Prefs.set(PREFIX+"randCostesShuffleNumber",randCostesShuffleNumber);
 
 		Prefs.set(PREFIX+"use_advanced", use_advanced);		
 		
