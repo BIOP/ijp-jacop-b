@@ -132,10 +132,6 @@ public class RandomCostes {
         double im2Avg = getMean(impCH2);
         double im3Avg = im1Avg+im2Avg;
 
-        /*System.out.println("im1Avg "+im1Avg);
-        System.out.println("im2Avg "+im2Avg);
-        System.out.println("im3Avg "+im3Avg);*/
-
         double pearson = getPearson(impCH1, impCH2, im1Avg, im2Avg, im3Avg);
 
         //System.out.println("pearson= "+pearson );
