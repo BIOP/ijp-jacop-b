@@ -162,6 +162,8 @@ public class ImageColocalizer {
 
     		impA = oipA;
     		impB = oipB;
+
+            mask = Utils.getMask(impA, roi);
     	}
     	
     	/*

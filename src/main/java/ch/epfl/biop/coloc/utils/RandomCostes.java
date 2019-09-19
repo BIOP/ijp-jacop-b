@@ -34,6 +34,9 @@ public class RandomCostes {
 
 
         roi = imgA.getRoi();
+        if (roi==null) {
+            roi = new Roi(0,0,imgA.getWidth(), imgA.getHeight());
+        }
         this.squareSize = squareSize;
         this.nShuffling=nShuffling;
         this.binarize=binarize;

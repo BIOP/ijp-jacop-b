@@ -635,7 +635,7 @@ public class JACoP_B implements PlugIn {
          ImagePlus imp = IJ.openImage("C:\\Users\\chiarutt\\Desktop\\confocal-series-test.tif");
 		int[] xpoints = {264,139,89,203,331,322,190};
 		int[] ypoints = {114,118,230,269,265,153,178};
-		imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));
+		//imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));
 		imp.show();
 
 		// Allow to work within an IDE - IJ1 Style
