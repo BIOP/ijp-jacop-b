@@ -614,9 +614,9 @@ public class JACoP_B implements PlugIn {
 		fluo_max  = (int) d.getNextNumber();
 		
 		Prefs.set(PREFIX+"is_auto_fluo", is_auto_fluo);
-		Prefs.set(PREFIX+"channelA", fluo_bins);
-		Prefs.set(PREFIX+"channelA", fluo_min);
-		Prefs.set(PREFIX+"channelA", fluo_max);
+		Prefs.set(PREFIX+"fluo_bins", fluo_bins);
+		Prefs.set(PREFIX+"fluo_min", fluo_min);
+		Prefs.set(PREFIX+"fluo_max", fluo_max);
 
 		return true;
 	}
@@ -634,10 +634,10 @@ public class JACoP_B implements PlugIn {
 		// Make some nice images
 	//	ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
 		// ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
-         ImagePlus imp = IJ.openImage("C:\\Users\\chiarutt\\Desktop\\confocal-series-test.tif");
+        ImagePlus imp = IJ.openImage("C:\\Users\\chiarutt\\Desktop\\confocal-series-test.tif");
 		int[] xpoints = {264,139,89,203,331,322,190};
 		int[] ypoints = {114,118,230,269,265,153,178};
-		//imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));
+		imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));
 		imp.show();
 
 		// Allow to work within an IDE - IJ1 Style

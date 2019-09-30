@@ -46,20 +46,19 @@ public class RandomCostes {
             imgA.getProcessor().setThreshold(thrA,Double.MAX_VALUE,ImageProcessor.NO_LUT_UPDATE);
             ImagePlus imgTempA = new ImagePlus();
             imgTempA.setProcessor(imgA.getProcessor().createMask());
-            imgA = imgTempA;
+            this.imgA = imgTempA;
 
             imgB.getProcessor().setThreshold(thrB,Double.MAX_VALUE,ImageProcessor.NO_LUT_UPDATE);
             ImagePlus imgTempB = new ImagePlus();
             imgTempB.setProcessor(imgB.getProcessor().createMask());
-            imgB = imgTempB;
+            this.imgB = imgTempB;
 
 
         }
-        //imgA.show();
-        //imgB.show();
+        //this.imgA.show();
+        //this.imgB.show();
 
         imp_orig = RGBStackMerge.mergeChannels(new ImagePlus[]{imgA,imgB},true);
-        //imp_orig.show();
 
         this.thrA=thrA;
         this.thrB=thrB;
