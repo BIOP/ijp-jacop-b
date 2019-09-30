@@ -63,7 +63,9 @@ public class JACoP_B implements PlugIn {
 	
 	int mThrA, mThrB;
 	
-	Boolean doCostesThr=false, doPearsons=false, doOverlap=false, doManders=false, doFluorogram=false, doICA=false, doCostesRand=false, doRandomCostes = false, doRandomCostesMask = false;
+	Boolean doCostesThr=false, doPearsons=false, doOverlap=false, doManders=false, doFluorogram=false, doICA=false,
+			//doCostesRand=false,
+			doRandomCostes = false, doRandomCostesMask = false;
 
 	Integer randCostesBlockSize, randCostesShuffleNumber;
 
@@ -459,7 +461,7 @@ public class JACoP_B implements PlugIn {
 		doICA = Prefs.get(PREFIX+"doICA", false);
 		doFluorogram = Prefs.get(PREFIX+"doFluorogram", false);
 		is_montage_vertical = Prefs.get(PREFIX+"is_montage_vertical", false);
-		doCostesRand = Prefs.get(PREFIX+"doCostesRand", false);
+		//doCostesRand = Prefs.get(PREFIX+"doCostesRand", false);
         doRandomCostes = Prefs.get(PREFIX+"doRandomCostes", false);
         doRandomCostesMask = Prefs.get(PREFIX+"doRandomCostesMask", false);
 
@@ -502,7 +504,7 @@ public class JACoP_B implements PlugIn {
 		d.addCheckbox("Get_Fluorogram", doFluorogram);
 		d.addCheckbox("Report_As_Vertical_Montage", is_montage_vertical);
 		
-		d.addCheckbox("Perform_Costes_Randomization (Not implemented)", doCostesRand);
+		//d.addCheckbox("Perform_Costes_Randomization (Not implemented)", doCostesRand);
         d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, No Threshold)", doRandomCostes);
         d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, With Threshold)", doRandomCostesMask);
         d.addNumericField("Block Size for Costes Randomization (pixel)", randCostesBlockSize, 0);
@@ -537,7 +539,7 @@ public class JACoP_B implements PlugIn {
 		doICA = d.getNextBoolean();
 		doFluorogram = d.getNextBoolean();
 		is_montage_vertical = d.getNextBoolean();
-		doCostesRand = d.getNextBoolean();
+		//doCostesRand = d.getNextBoolean();
         doRandomCostes = d.getNextBoolean();
         doRandomCostesMask = d.getNextBoolean();
         costesBlockSize = (int) d.getNextNumber();
@@ -568,7 +570,7 @@ public class JACoP_B implements PlugIn {
 		Prefs.set(PREFIX+"doICA", doICA);
 		Prefs.set(PREFIX+"doFluorogram", doFluorogram);
 		Prefs.set(PREFIX+"is_montage_vertical", is_montage_vertical);
-		Prefs.set(PREFIX+"doCostesRand", doCostesRand);
+		//Prefs.set(PREFIX+"doCostesRand", doCostesRand);
 
         Prefs.set(PREFIX+"doRandomCostes", doRandomCostes);
         Prefs.set(PREFIX+"doRandomCostesMask", doRandomCostesMask);

@@ -443,8 +443,6 @@ public class ImageColocalizer {
         }
         costesMask.setCalibration(this.cal);
         costesMask.setSlice(1);
-        //costesMask.show();
-               
         
         IJ.showStatus("");
         IJ.showProgress(2,1);
