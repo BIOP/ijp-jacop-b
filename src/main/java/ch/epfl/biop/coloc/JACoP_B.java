@@ -445,8 +445,8 @@ public class JACoP_B implements PlugIn {
 		thrA = Prefs.get(PREFIX+"thrA", "Otsu");
 		thrB = Prefs.get(PREFIX+"thrB", "Otsu");
 
-		mThrA = Prefs.getInt(PREFIX+"mThrA", 0);
-		mThrB = Prefs.getInt(PREFIX+"mThrB", 0);
+		mThrA = (int) Prefs.get(PREFIX+"mThrA", 0);
+		mThrB = (int) Prefs.get(PREFIX+"mThrB", 0);
 
 		costesBlockSize = Prefs.getInt(PREFIX+"costesBlockSize", 0);
 		costesShufflingNumber = Prefs.getInt(PREFIX+"costesShufflingNumber", 0);
@@ -461,7 +461,6 @@ public class JACoP_B implements PlugIn {
 		doICA = Prefs.get(PREFIX+"doICA", false);
 		doFluorogram = Prefs.get(PREFIX+"doFluorogram", false);
 		is_montage_vertical = Prefs.get(PREFIX+"is_montage_vertical", false);
-		//doCostesRand = Prefs.get(PREFIX+"doCostesRand", false);
         doRandomCostes = Prefs.get(PREFIX+"doRandomCostes", false);
         doRandomCostesMask = Prefs.get(PREFIX+"doRandomCostesMask", false);
 
@@ -484,11 +483,11 @@ public class JACoP_B implements PlugIn {
 		String[] thrsArr = new String[thrs.size()]; 
 		thrsArr = thrs.toArray(thrsArr);
 		
-		d.addChoice("Threshold_for_Channel_A", thrsArr, thrsArr[0]);
-		d.addChoice("Threshold_for_Channel_B", thrsArr, thrsArr[0]);
+		d.addChoice("Threshold_for_Channel_A", thrsArr, thrA);
+		d.addChoice("Threshold_for_Channel_B", thrsArr, thrB);
 		
-		d.addNumericField("Manual_Threshold_A", 0, 0);
-		d.addNumericField("Manual_Threshold_B", 0, 0);
+		d.addNumericField("Manual_Threshold_A", mThrA, 0);
+		d.addNumericField("Manual_Threshold_B", mThrB, 0);
 
 		d.addCheckbox("Crop_ROIs", doCropRois);
 
@@ -506,7 +505,7 @@ public class JACoP_B implements PlugIn {
 		
 		//d.addCheckbox("Perform_Costes_Randomization (Not implemented)", doCostesRand);
         d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, No Threshold)", doRandomCostes);
-        d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, With Threshold)", doRandomCostesMask);
+        d.addCheckbox("Perform_Costes_Randomization_Mask (2D, BIOP implementation, With Threshold)", doRandomCostesMask);
         d.addNumericField("Block Size for Costes Randomization (pixel)", randCostesBlockSize, 0);
         d.addNumericField("Number of shuffling for Costes Randomization", randCostesShuffleNumber, 0);
 		d.addCheckbox("Set Advanced Parameters", use_advanced);
@@ -558,7 +557,6 @@ public class JACoP_B implements PlugIn {
 
 		Prefs.set(PREFIX+"mThrA", mThrA);
 		Prefs.set(PREFIX+"mThrB", mThrB);
-
 
 		Prefs.set(PREFIX+"doCropRois", doCropRois);
 		Prefs.set(PREFIX+"doSeparateZ", doSeparateZ);
