@@ -2,13 +2,14 @@ package ch.epfl.biop.coloc.utils;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.Plot;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.plugin.RGBStackMerge;
 import ij.process.ImageProcessor;
+
+import java.awt.*;
 import java.util.ArrayList;
-import java.awt.Rectangle;
-import java.awt.Shape;
 import java.util.Collections;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.CombinatoricsUtils;
@@ -42,7 +43,6 @@ public class RandomCostes {
         this.binarize=binarize;
 
         if (binarize) {
-            //System.err.println("2D BIOP Random Costes with Binarization do not work yet");
             imgA.getProcessor().setThreshold(thrA,Double.MAX_VALUE,ImageProcessor.NO_LUT_UPDATE);
             ImagePlus imgTempA = new ImagePlus();
             imgTempA.setProcessor(imgA.getProcessor().createMask());
@@ -52,11 +52,7 @@ public class RandomCostes {
             ImagePlus imgTempB = new ImagePlus();
             imgTempB.setProcessor(imgB.getProcessor().createMask());
             this.imgB = imgTempB;
-
-
         }
-        //this.imgA.show();
-        //this.imgB.show();
 
         imp_orig = RGBStackMerge.mergeChannels(new ImagePlus[]{imgA,imgB},true);
 
@@ -88,16 +84,12 @@ public class RandomCostes {
                 Rectangle r = new Rectangle(x,y,squareSize, squareSize);
                 if (sroi.getShape().contains(r)) {
 
-                    //rm.addRoi(new Roi(x+sroi.getXBase(),y+sroi.getYBase(),squareSize, squareSize)); // Uncomment to vizualize blocks
                     // Copy block to stack
-                    //imp.setC(0);
                     imgA.setRoi((int) (x+sroi.getXBase()),(int) (y+sroi.getYBase()),squareSize, squareSize);
                     IJ.run(imgA, "Copy", "");
                     IJ.run(impCH1, "Add Slice", "");
                     impCH1.setSlice(nBlocks);
                     IJ.run(impCH1, "Paste", "");
-
-                    //imp.setC(1);
 
                     imgB.setRoi((int) (x+sroi.getXBase()),(int) (y+sroi.getYBase()),squareSize, squareSize);
                     IJ.run(imgB, "Copy", "");
@@ -110,13 +102,11 @@ public class RandomCostes {
             }
         }
 
-        double im1Avg = getMean(impCH1);
+        /*double im1Avg = getMean(impCH1);
         double im2Avg = getMean(impCH2);
-        double im3Avg = im1Avg+im2Avg;
+        double im3Avg = im1Avg+im2Avg;*/
 
-        double pearson = getPearson(impCH1, impCH2, im1Avg, im2Avg, im3Avg);
-
-        //System.out.println("pearson= "+pearson );
+        double pearson = getPearson(impCH1, impCH2);//, im1Avg, im2Avg, im3Avg);
 
         // Normal indexes
         ArrayList<Integer> blockIndexes = new ArrayList<>();
@@ -127,30 +117,29 @@ public class RandomCostes {
 
         imp.setRoi(roi);
 
-        //if (printWarning) {
-            double maxShuffling = CombinatoricsUtils.factorialDouble(nBlocks);
-            //System.out.println("Maximal number of shuffling = "+maxShuffling)
+        double maxShuffling = CombinatoricsUtils.factorialDouble(nBlocks);
+        //System.out.println("Maximal number of shuffling = "+maxShuffling)
 
-            if (nShuffling<100) {
-                System.out.println("Take care! Low number of shuffling...");
-            }
+        if (nShuffling<100) {
+            System.out.println("Take care! Low number of shuffling...");
+        }
 
-            if (nShuffling>2*maxShuffling) {
-                System.out.println("Take care! You ask for "+nShuffling+" shufflings, but the maximal number of shuffling is "+maxShuffling);
-                System.out.println("You are probably sampling many times the same shuffling");
-            }
-        //}
+        if (nShuffling>2*maxShuffling) {
+            System.out.println("Take care! You ask for "+nShuffling+" shufflings, but the maximal number of shuffling is "+maxShuffling);
+            System.out.println("You are sampling many times the same shuffling.");
+        }
 
-        StandardDeviation sd = new StandardDeviation(false);
+        sd = new StandardDeviation(false);
         double sum = 0;
         int nAbove = 0;
         int nBelow = 0;
+        valuesShuffling = new double[nShuffling];
 
         ImagePlus impCH2Shuffled = IJ.createImage("Costes Block CH2 Shuffled", "32-bit black", squareSize, squareSize, nBlocks);
 
-        im1Avg = getMean(impCH1);
-        im2Avg = getMean(impCH2);
-        im3Avg = im1Avg+im2Avg;
+        //im1Avg = getMean(impCH1);
+        //im2Avg = getMean(impCH2);
+        //im3Avg = im1Avg+im2Avg;
 
         for (int iShuffle=0;iShuffle<nShuffling;iShuffle++) {
             Collections.shuffle(blockIndexes);
@@ -158,7 +147,7 @@ public class RandomCostes {
                 impCH2Shuffled.getStack().setProcessor(impCH2.getStack().getProcessor(blockIndexes.get(iSlice)+1), iSlice+1);
             }
 
-            double value = getPearson(impCH1, impCH2Shuffled, im1Avg, im2Avg, im3Avg);
+            double value = getPearson(impCH1, impCH2Shuffled);//, im1Avg, im2Avg, im3Avg);
             //System.out.println(value);
 
             if (value>pearson) {
@@ -169,6 +158,7 @@ public class RandomCostes {
             }
             sum+=value;
             sd.increment(value);
+            valuesShuffling[iShuffle] = value;
         }
 
         double shufflingMean = (sum/(double)nShuffling);
@@ -178,6 +168,61 @@ public class RandomCostes {
         imp.changes=false;
         imp.close();
 
+    }
+
+    StandardDeviation sd;
+    double[] valuesShuffling;
+
+    public Plot getPearsonDistributionGraph() {
+
+        double binRes = 0.25;
+        //double binSpacing = binRes*sd.getResult();
+
+        int minBin = (int) (-6/binRes);
+        int maxBin = (int) (+6/binRes);
+        if (pearsonNormalized>0) {
+            maxBin = Math.max(maxBin, (int) (pearsonNormalized*1.5/binRes+1) );
+        }
+
+        if (pearsonNormalized<0) {
+            minBin = Math.min(minBin, (int) (pearsonNormalized*1.5/binRes-1) );
+        }
+
+        double[] bins = new double[maxBin-minBin];
+        double[] xs = new double[maxBin-minBin];
+        double[] gaussFit = new double[maxBin-minBin];
+
+        for (int iV=0;iV<valuesShuffling.length;iV++) {
+            int iBin = (int) (  ((valuesShuffling[iV]/(sd.getResult()))/binRes-minBin)+0.5);
+            bins[iBin]++;
+        }
+
+        double normFactor = 1/Math.sqrt(2*Math.PI);
+        for (int i=0;i<xs.length;i++) {
+            xs[i]=(minBin+i)*binRes;
+            bins[i]/=(valuesShuffling.length);
+            bins[i]/=binRes;
+            gaussFit[i]= Math.exp(-xs[i]*xs[i]/2)*normFactor;
+        }
+
+        String titlePlot = "Random Costes";
+        if (binarize) {titlePlot+=" Mask";}
+
+        Plot plot = new Plot(titlePlot,"Normalized Pearson","Probability");
+
+        plot.setColor("black");
+        plot.addPoints(xs,gaussFit,Plot.LINE);
+        plot.addPoints(xs,bins, Plot.CIRCLE);
+
+        plot.setColor("red");
+        plot.addPoints(new double[]{pearsonNormalized,pearsonNormalized},new double[]{0,0.4},Plot.LINE );
+
+        return plot;
+    }
+
+    public ImagePlus getExampleShuffleImage() {
+
+        return null;
     }
 
     // Deeply inspired from https://github.com/fiji/Colocalisation_Analysis/blob/master/src/main/java/sc/fiji/coloc/Colocalisation_Threshold.java
@@ -203,10 +248,11 @@ public class RandomCostes {
     }
 
 
-    double getPearson(ImagePlus img1, ImagePlus img2, double ch1Mean, double ch2Mean, double ch3Mean ) {
+    double getPearson(ImagePlus img1, ImagePlus img2){
+        //}, double ch1Mean, double ch2Mean, double ch3Mean ) {
 
-        float ch1 = 0, ch2 = 0, ch3 = 0;
-        double ch1Sum = 0, ch2Sum = 0, ch3Sum = 0;
+        float ch1, ch2;//, ch3 = 0;
+        //double ch1Sum = 0, ch2Sum = 0, ch3Sum = 0;
 
         int nSlices = img1.getNSlices();
         int rheight = img1.getHeight();
@@ -214,26 +260,7 @@ public class RandomCostes {
 
         double N = nSlices*rheight*rwidth;
 
-	/*for (int s=1; s<=nSlices; s++) {
-		ip1 = img1.getStack().getProcessor(s);
-		ip2 = img2.getStack().getProcessor(s);
-		for (int y=0; y<rheight; y++) {
-			for (int x=0; x<rwidth; x++) {
-				ch1 = ip1.getPixelValue(x,y);
-				ch2 = ip2.getPixelValue(x,y);
-				ch3 = ch1+ch2;
-				ch1Sum+=ch1;
-				ch2Sum+=ch2;
-				ch3Sum+=ch3;
-			}
-		}
-	}
-
-	def double ch1Mean = ch1Sum/N;
-	def double ch2Mean = ch2Sum/N;
-	def double ch3Mean = ch3Sum/N;*/
-
-        double ch1mch1MeanSqSum = 0, ch2mch2MeanSqSum = 0, ch3mch3MeanSqSum = 0;
+        //double ch1mch1MeanSqSum = 0, ch2mch2MeanSqSum = 0, ch3mch3MeanSqSum = 0;
 
         double sumX=0, sumXX=0, sumXY=0, sumYY=0, sumY=0;
 
@@ -245,10 +272,10 @@ public class RandomCostes {
                 for (int x=0; x<rwidth; x++) {
                     ch1 = ip1.getPixelValue(x,y);
                     ch2 = ip2.getPixelValue(x,y);
-                    ch3 = ch1+ch2;
-                    ch1mch1MeanSqSum+= (ch1-ch1Mean)*(ch1-ch1Mean);
+                    //ch3 = ch1+ch2;
+                    /*ch1mch1MeanSqSum+= (ch1-ch1Mean)*(ch1-ch1Mean);
                     ch2mch2MeanSqSum+= (ch2-ch2Mean)*(ch2-ch2Mean);
-                    ch3mch3MeanSqSum+= (ch3-ch3Mean)*(ch3-ch3Mean);
+                    ch3mch3MeanSqSum+= (ch3-ch3Mean)*(ch3-ch3Mean);*/
                     //calc pearsons for original image
                     sumX = sumX+ch1;
                     sumXY = sumXY + (ch1 * ch2);

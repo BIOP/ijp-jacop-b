@@ -1097,8 +1097,8 @@ public class ImageColocalizer {
         
     }
 
-    public void RandomCostes2D(boolean binarize, int squareSize, int nShuffling) {
-        randomCostes2D(impA,impB,squareSize,nShuffling,binarize);
+    public void RandomCostes2D(boolean binarize, int squareSize, int nShuffling, boolean showPlot, boolean showShuffledImage) {
+        randomCostes2D(impA,impB,squareSize,nShuffling,binarize, showPlot, showShuffledImage);
     }
 
     /**
@@ -1113,14 +1113,21 @@ public class ImageColocalizer {
      * Threshold means the randomization is done with the thresholded images or not
      *
      */
-    public void randomCostes2D(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean threshold) {
+    public RandomCostes randomCostes2D(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean threshold, boolean showPlot, boolean showSampleImage) {
         RandomCostes rc = new RandomCostes(imgA,imgB, squareSize, nShuffling,threshold, thrA, thrB);
         rc.compute();
+        if (showPlot) {
+            rc.getPearsonDistributionGraph().show();
+        }
+        if (showSampleImage) {
+            rc.getExampleShuffleImage().show();
+        }
         if (threshold) {
             rt.addValue("Random Pearson Costes 2D (Mask)", rc.pearsonNormalized);
         } else {
             rt.addValue("Random Pearson Costes 2D", rc.pearsonNormalized);
         }
+        return rc;
     }
 
 

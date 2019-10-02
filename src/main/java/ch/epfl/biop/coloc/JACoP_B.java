@@ -65,7 +65,7 @@ public class JACoP_B implements PlugIn {
 	
 	Boolean doCostesThr=false, doPearsons=false, doOverlap=false, doManders=false, doFluorogram=false, doICA=false,
 			//doCostesRand=false,
-			doRandomCostes = false, doRandomCostesMask = false;
+			doRandomCostes = false, doRandomCostesMask = false, showCostesPlot=false, showCostesRandomImage=false;
 
 	Integer randCostesBlockSize, randCostesShuffleNumber;
 
@@ -337,8 +337,8 @@ public class JACoP_B implements PlugIn {
 		if(doOverlap) ic.Overlap();
 		if(doICA) ic.ICA();
 		if(doFluorogram) ic.CytoFluo();
-        if(doRandomCostes) ic.RandomCostes2D(false, costesBlockSize, costesShufflingNumber);
-        if(doRandomCostesMask) ic.RandomCostes2D(true, costesBlockSize, costesShufflingNumber);
+        if(doRandomCostes) ic.RandomCostes2D(false, costesBlockSize, costesShufflingNumber, showCostesPlot, showCostesRandomImage);
+        if(doRandomCostesMask) ic.RandomCostes2D(true, costesBlockSize, costesShufflingNumber, showCostesPlot, showCostesRandomImage);
 		// Add Areas
 		ic.Areas();
 		
@@ -463,9 +463,11 @@ public class JACoP_B implements PlugIn {
 		is_montage_vertical = Prefs.get(PREFIX+"is_montage_vertical", false);
         doRandomCostes = Prefs.get(PREFIX+"doRandomCostes", false);
         doRandomCostesMask = Prefs.get(PREFIX+"doRandomCostesMask", false);
+		showCostesPlot = Prefs.get(PREFIX+"showCostesPlot", false);
+		showCostesRandomImage = Prefs.get(PREFIX+"showCostesRandomImage", false);
 
-		randCostesBlockSize = Prefs.getInt(PREFIX+"randCostesBlockSize", 5);
-		randCostesShuffleNumber = Prefs.getInt(PREFIX+"randCostesShuffleNumber", 100);
+		randCostesBlockSize = (int) Prefs.get(PREFIX+"randCostesBlockSize", 5);
+		randCostesShuffleNumber = (int) Prefs.get(PREFIX+"randCostesShuffleNumber", 100);
 
 		use_advanced = Prefs.get(PREFIX+"use_advanced", false);
 
@@ -506,6 +508,9 @@ public class JACoP_B implements PlugIn {
 		//d.addCheckbox("Perform_Costes_Randomization (Not implemented)", doCostesRand);
         d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, No Threshold)", doRandomCostes);
         d.addCheckbox("Perform_Costes_Randomization_Mask (2D, BIOP implementation, With Threshold)", doRandomCostesMask);
+
+		d.addCheckbox("Show Costes Plot", showCostesPlot);
+		d.addCheckbox("Show Costes Random Image", showCostesRandomImage);
         d.addNumericField("Block Size for Costes Randomization (pixel)", randCostesBlockSize, 0);
         d.addNumericField("Number of shuffling for Costes Randomization", randCostesShuffleNumber, 0);
 		d.addCheckbox("Set Advanced Parameters", use_advanced);
@@ -541,6 +546,9 @@ public class JACoP_B implements PlugIn {
 		//doCostesRand = d.getNextBoolean();
         doRandomCostes = d.getNextBoolean();
         doRandomCostesMask = d.getNextBoolean();
+        showCostesPlot = d.getNextBoolean();
+		showCostesRandomImage = d.getNextBoolean();
+
         costesBlockSize = (int) d.getNextNumber();
         costesShufflingNumber = (int) d.getNextNumber();
 		use_advanced = d.getNextBoolean();
@@ -572,6 +580,9 @@ public class JACoP_B implements PlugIn {
 
         Prefs.set(PREFIX+"doRandomCostes", doRandomCostes);
         Prefs.set(PREFIX+"doRandomCostesMask", doRandomCostesMask);
+
+		Prefs.set(PREFIX+"showCostesPlot", showCostesPlot);
+		Prefs.set(PREFIX+"showCostesRandomImage", showCostesRandomImage);
 
         Prefs.set(PREFIX+"costesBlockSize", costesBlockSize);
         Prefs.set(PREFIX+"costesShufflingNumber", costesShufflingNumber);
