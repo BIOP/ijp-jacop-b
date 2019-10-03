@@ -58,24 +58,16 @@ public class JACoP_B implements PlugIn {
 	// If no images, dialog with folder otherwise normal dialog
 	int nImages;
 	int channelA, channelB;
-	
-	ImagePlus impA, impB;
+
 	
 	String thrA, thrB;
 	
 	int mThrA, mThrB;
 	
 	Boolean doCostesThr=false, doPearsons=false, doOverlap=false, doManders=false, doFluorogram=false, doICA=false,
-			//doCostesRand=false,
 			doRandomCostes = false, doRandomCostesMask = false, showCostesPlot=false, showCostesRandomImage=false;
 
 	Integer randCostesBlockSize, randCostesShuffleNumber;
-
-	Calibration calib;
-	
-	int xyBlock, zBlock, nbRand, fitMeth;
-	double binWidth;
-	Boolean xyRand, zRand, showRand;
 	
 	File imageFolder = null;
 	
@@ -105,8 +97,8 @@ public class JACoP_B implements PlugIn {
 
 	private int fluo_max=255;
 
-
     int costesBlockSize = 5;
+
     int costesShufflingNumber = 100;
 	
 	@Override
@@ -439,9 +431,6 @@ public class JACoP_B implements PlugIn {
 				imgs.add(resizedImg);
 			}
 
-
-
-
 			if (showCostesPlot) columns++;
 			if (showCostesRandomImage) columns++;
 			
@@ -464,10 +453,6 @@ public class JACoP_B implements PlugIn {
         	// We can use Oli's Stack Montage for convenience
         	montage = StackMontage.montageImages(imgs,rows, columns);
         }
-
-        /*if ((showCostesPlot)&&(doRandomCostes)) {
-
-		}*/
     	
         //Eventually add the fluorogram
 		if(doFluorogram) {
@@ -590,9 +575,6 @@ public class JACoP_B implements PlugIn {
         d.addNumericField("Block Size for Costes Randomization (pixel)", randCostesBlockSize, 0);
         d.addNumericField("Number of shuffling for Costes Randomization", randCostesShuffleNumber, 0);
 		d.addCheckbox("Set Advanced Parameters", use_advanced);
-
-		
-		//d.addChoiceMessage("Report Choice");
 		
 		d.showDialog();
 		if(d.wasCanceled()) {
@@ -619,7 +601,6 @@ public class JACoP_B implements PlugIn {
 		doICA = d.getNextBoolean();
 		doFluorogram = d.getNextBoolean();
 		is_montage_vertical = d.getNextBoolean();
-		//doCostesRand = d.getNextBoolean();
         doRandomCostes = d.getNextBoolean();
         doRandomCostesMask = d.getNextBoolean();
         showCostesPlot = d.getNextBoolean();
@@ -652,7 +633,6 @@ public class JACoP_B implements PlugIn {
 		Prefs.set(PREFIX+"doICA", doICA);
 		Prefs.set(PREFIX+"doFluorogram", doFluorogram);
 		Prefs.set(PREFIX+"is_montage_vertical", is_montage_vertical);
-		//Prefs.set(PREFIX+"doCostesRand", doCostesRand);
 
         Prefs.set(PREFIX+"doRandomCostes", doRandomCostes);
         Prefs.set(PREFIX+"doRandomCostesMask", doRandomCostesMask);

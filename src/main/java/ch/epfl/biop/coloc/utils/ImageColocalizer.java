@@ -1120,8 +1120,6 @@ public class ImageColocalizer {
      *
      */
 
-
-
     public RandomCostes randomCostes2D(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean threshold, boolean showPlot, boolean showSampleImage) {
         RandomCostes rc = new RandomCostes(imgA,imgB, squareSize, nShuffling,threshold, thrA, thrB);
         rc.compute();
@@ -1139,8 +1137,10 @@ public class ImageColocalizer {
         }
         if (threshold) {
             rt.addValue("Random Pearson Costes 2D (Mask)", rc.pearsonNormalized);
+            IJ.log("\nNormalized random Pearson Costes 2D (Mask) nShuffle = "+nShuffling+" block Size = "+squareSize+" \nnpc="+round(rc.pearsonNormalized,3));
         } else {
             rt.addValue("Random Pearson Costes 2D", rc.pearsonNormalized);
+            IJ.log("\nNormalized random Pearson Costes 2D nShuffle = "+nShuffling+" block Size = "+squareSize+" \nnpc="+round(rc.pearsonNormalized,3));
         }
         return rc;
     }
