@@ -26,6 +26,7 @@
 
 package ch.epfl.biop.coloc;
 
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +50,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.StackCombiner;
 import ij.plugin.Thresholder;
 import ij.plugin.frame.RoiManager;
+import ij.process.ImageProcessor;
 
 public class JACoP_B implements PlugIn {
     
@@ -360,18 +362,88 @@ public class JACoP_B implements PlugIn {
 			
 			imgs.add(ic.getRGBColocImage());
 			imgs.add(ic.getRGBANDMask());
-			
+
+			if ((showCostesRandomImage)&&(doRandomCostes)) {
+				imgs.add(ic.getRGBImage(ic.randomCostesExampleShuffledImg,false));
+			}
+
+			if ((showCostesRandomImage)&&(doRandomCostesMask)) {
+				imgs.add(ic.getRGBImage(ic.randomCostesMaskExampleShuffledImg,false));
+			}
+
+			if ((showCostesPlot)&&(doRandomCostes)) {
+				ImageProcessor resizedProcessor = ic.randomCostesPlot.getProcessor().resize(ic.getRGBMaskA().getWidth(), ic.getRGBMaskA().getHeight(), true);
+				ImagePlus resizedImg = new ImagePlus();
+				resizedProcessor.invert();
+				resizedProcessor.setColor(Color.WHITE);
+				resizedProcessor.setLineWidth(3);
+				resizedProcessor.drawString("Mask",0,0);
+				resizedImg.setProcessor(resizedProcessor);
+				imgs.add(resizedImg);
+			}
+
+			if ((showCostesPlot)&&(doRandomCostesMask)) {
+				ImageProcessor resizedProcessor = ic.randomCostesMaskPlot.getProcessor().resize(ic.getRGBMaskA().getWidth(), ic.getRGBMaskA().getHeight(), true);
+				ImagePlus resizedImg = new ImagePlus();//imgs.add(ic.randomCostesPlot);
+				resizedProcessor.invert();
+				resizedProcessor.setColor(Color.WHITE);
+				resizedProcessor.setLineWidth(3);
+				resizedProcessor.drawString("Mask",50,50);
+				resizedImg.setProcessor(resizedProcessor);
+				imgs.add(resizedImg);
+			}
+
+			if (showCostesPlot) rows++;
+			if (showCostesRandomImage) rows++;
+
         // Horizontal Montage
-		} else { 
+		} else {
+			columns = 3;
+			rows = 2;
+
 			imgs.add(ic.getRGBImageA(false));
 			imgs.add(ic.getRGBImageB(false));
 			imgs.add(ic.getRGBColocImage());
 
+			if ((showCostesRandomImage)&&(doRandomCostes)) {
+				imgs.add(ic.getRGBImage(ic.randomCostesExampleShuffledImg,false));
+			}
+
+			if ((showCostesPlot)&&(doRandomCostes)) {
+				ImageProcessor resizedProcessor = ic.randomCostesPlot.getProcessor().resize(ic.getRGBMaskA().getWidth(), ic.getRGBMaskA().getHeight(), true);
+				ImagePlus resizedImg = new ImagePlus();//imgs.add(ic.randomCostesPlot);
+				resizedProcessor.invert();
+				resizedProcessor.setColor(Color.WHITE);
+				resizedProcessor.setLineWidth(3);
+				resizedProcessor.drawString("No Mask",50,50);
+				resizedImg.setProcessor(resizedProcessor);
+				imgs.add(resizedImg);
+			}
+
 			imgs.add(ic.getRGBMaskA());
 			imgs.add(ic.getRGBMaskB());
 			imgs.add(ic.getRGBANDMask());
-			columns = 3;
-			rows = 2;
+
+			if ((showCostesRandomImage)&&(doRandomCostesMask)) {
+				imgs.add(ic.getRGBImage(ic.randomCostesMaskExampleShuffledImg,false));
+			}
+
+			if ((showCostesPlot)&&(doRandomCostesMask)) {
+				ImageProcessor resizedProcessor = ic.randomCostesMaskPlot.getProcessor().resize(ic.getRGBMaskA().getWidth(), ic.getRGBMaskA().getHeight(), true);
+				ImagePlus resizedImg = new ImagePlus();//imgs.add(ic.randomCostesPlot);
+				resizedProcessor.invert();
+				resizedProcessor.setColor(Color.WHITE);
+				resizedProcessor.setLineWidth(3);
+				resizedProcessor.drawString("Mask",50,50);
+				resizedImg.setProcessor(resizedProcessor);
+				imgs.add(resizedImg);
+			}
+
+
+
+
+			if (showCostesPlot) columns++;
+			if (showCostesRandomImage) columns++;
 			
         }
 		
@@ -392,6 +464,10 @@ public class JACoP_B implements PlugIn {
         	// We can use Oli's Stack Montage for convenience
         	montage = StackMontage.montageImages(imgs,rows, columns);
         }
+
+        /*if ((showCostesPlot)&&(doRandomCostes)) {
+
+		}*/
     	
         //Eventually add the fluorogram
 		if(doFluorogram) {

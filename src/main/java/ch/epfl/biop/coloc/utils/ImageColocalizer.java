@@ -1101,6 +1101,12 @@ public class ImageColocalizer {
         randomCostes2D(impA,impB,squareSize,nShuffling,binarize, showPlot, showShuffledImage);
     }
 
+    public ImagePlus randomCostesMaskPlot;
+    public ImagePlus randomCostesPlot;
+
+    public ImagePlus randomCostesMaskExampleShuffledImg;
+    public ImagePlus randomCostesExampleShuffledImg;
+
     /**
      * Selects Blocks within ROI of size square
      * Performs Pearson correlation coefficient with these blocks, unshifted, and then by performing random shifts of the blocks (nShuffling)
@@ -1113,14 +1119,23 @@ public class ImageColocalizer {
      * Threshold means the randomization is done with the thresholded images or not
      *
      */
+
+
+
     public RandomCostes randomCostes2D(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean threshold, boolean showPlot, boolean showSampleImage) {
         RandomCostes rc = new RandomCostes(imgA,imgB, squareSize, nShuffling,threshold, thrA, thrB);
         rc.compute();
-        if (showPlot) {
-            rc.getPearsonDistributionGraph().show();
+        if (threshold) {
+            randomCostesMaskExampleShuffledImg = rc.getExampleShuffleImage();
+        } else {
+            randomCostesExampleShuffledImg = rc.getExampleShuffleImage();
         }
-        if (showSampleImage) {
-            rc.getExampleShuffleImage().show();
+        if (showPlot) {
+            if (threshold) {
+                randomCostesMaskPlot = rc.getPearsonDistributionGraph().getImagePlus();
+            } else {
+                randomCostesPlot = rc.getPearsonDistributionGraph().getImagePlus();
+            }
         }
         if (threshold) {
             rt.addValue("Random Pearson Costes 2D (Mask)", rc.pearsonNormalized);
@@ -1677,6 +1692,10 @@ public class ImageColocalizer {
 		
 		return flattenRoi(impr);
 	}
+
+    public ImagePlus getRandomCostesMaskPlot(Boolean is_Z) {
+        return getRGBImage(impA, is_Z);
+    }
 
 	public ImagePlus getRGBImageA(Boolean is_Z) {
 		return getRGBImage(impA, is_Z);

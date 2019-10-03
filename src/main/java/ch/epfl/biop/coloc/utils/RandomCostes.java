@@ -14,6 +14,10 @@ import java.util.Collections;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
+/**
+ * @author Nicolas Chiaruttini
+ */
+
 public class RandomCostes {
 
     public ImagePlus imp_orig;
@@ -166,9 +170,46 @@ public class RandomCostes {
         pearsonNormalized = (pearson-shufflingMean) / shufflingStd;
 
         imp.changes=false;
+
+        ImagePlus impSampleShuffleCH1 = IJ.createImage("Sample CH1", "32-bit black", imp.getWidth(), imp.getHeight(), 1);
+        ImagePlus impSampleShuffleCH2 = IJ.createImage("Sample Shuffle CH2", "32-bit black", imp.getWidth(), imp.getHeight(), 1);
+
+        int iSlice=0;
+
+        for (int x=bounds.x;x+squareSize<bounds.x+bounds.width;x+=squareSize) {
+            for (int y=bounds.y;y+squareSize<bounds.y+bounds.height;y+=squareSize) {
+                Rectangle r = new Rectangle(x,y,squareSize, squareSize);
+                if (sroi.getShape().contains(r)) {
+
+                    // Copy block to stack
+                    imgA.setRoi((int) (x+sroi.getXBase()),(int) (y+sroi.getYBase()),squareSize, squareSize);
+                    IJ.run(imgA, "Copy", "");
+                    impSampleShuffleCH1.setRoi((int) (x+sroi.getXBase()),(int) (y+sroi.getYBase()),squareSize, squareSize);
+                    IJ.run(impSampleShuffleCH1, "Paste", "");
+
+                    iSlice++;
+                    impCH2Shuffled.setSlice(iSlice);
+                    IJ.run(impCH2Shuffled, "Copy", "");
+                    impSampleShuffleCH2.setRoi((int) (x+sroi.getXBase()),(int) (y+sroi.getYBase()),squareSize, squareSize);
+                    IJ.run(impSampleShuffleCH2, "Paste", "");
+
+                    nBlocks++;
+                }
+            }
+        }
+
+        impSampleShuffleCH1.setLut(imgA.getLuts()[0]);
+
+        impSampleShuffleCH2.setLut(imgB.getLuts()[0]);
+
+
+
         imp.close();
 
+        impSampleShuffle = RGBStackMerge.mergeChannels(new ImagePlus[]{impSampleShuffleCH1,impSampleShuffleCH2},true);
+
     }
+    ImagePlus impSampleShuffle;
 
     StandardDeviation sd;
     double[] valuesShuffling;
@@ -211,6 +252,7 @@ public class RandomCostes {
         Plot plot = new Plot(titlePlot,"Normalized Pearson","Probability");
 
         plot.setColor("black");
+        plot.setLineWidth(3);
         plot.addPoints(xs,gaussFit,Plot.LINE);
         plot.addPoints(xs,bins, Plot.CIRCLE);
 
@@ -221,46 +263,19 @@ public class RandomCostes {
     }
 
     public ImagePlus getExampleShuffleImage() {
-
-        return null;
+        return impSampleShuffle;
     }
 
     // Deeply inspired from https://github.com/fiji/Colocalisation_Analysis/blob/master/src/main/java/sc/fiji/coloc/Colocalisation_Threshold.java
 
-    public static double getMean(ImagePlus img) {
-        int nSlices = img.getNSlices();
-        int rheight = img.getHeight();
-        int rwidth = img.getWidth();
-
-        double N = nSlices*rheight*rwidth;
-        double chSum = 0;
-
-        for (int s=1; s<=nSlices; s++) {
-            ImageProcessor ip = img.getStack().getProcessor(s);
-            for (int y=0; y<rheight; y++) {
-                for (int x=0; x<rwidth; x++) {
-                    double ch = ip.getPixelValue(x,y);
-                    chSum+=ch;
-                }
-            }
-        }
-        return chSum/N;
-    }
-
-
     double getPearson(ImagePlus img1, ImagePlus img2){
-        //}, double ch1Mean, double ch2Mean, double ch3Mean ) {
 
-        float ch1, ch2;//, ch3 = 0;
-        //double ch1Sum = 0, ch2Sum = 0, ch3Sum = 0;
-
+        float ch1, ch2;
         int nSlices = img1.getNSlices();
         int rheight = img1.getHeight();
         int rwidth = img1.getWidth();
 
         double N = nSlices*rheight*rwidth;
-
-        //double ch1mch1MeanSqSum = 0, ch2mch2MeanSqSum = 0, ch3mch3MeanSqSum = 0;
 
         double sumX=0, sumXX=0, sumXY=0, sumYY=0, sumY=0;
 
@@ -272,11 +287,6 @@ public class RandomCostes {
                 for (int x=0; x<rwidth; x++) {
                     ch1 = ip1.getPixelValue(x,y);
                     ch2 = ip2.getPixelValue(x,y);
-                    //ch3 = ch1+ch2;
-                    /*ch1mch1MeanSqSum+= (ch1-ch1Mean)*(ch1-ch1Mean);
-                    ch2mch2MeanSqSum+= (ch2-ch2Mean)*(ch2-ch2Mean);
-                    ch3mch3MeanSqSum+= (ch3-ch3Mean)*(ch3-ch3Mean);*/
-                    //calc pearsons for original image
                     sumX = sumX+ch1;
                     sumXY = sumXY + (ch1 * ch2);
                     sumXX = sumXX + (ch1 * ch1);
