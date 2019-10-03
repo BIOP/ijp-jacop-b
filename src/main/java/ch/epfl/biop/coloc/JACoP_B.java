@@ -44,7 +44,6 @@ import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import ij.measure.Calibration;
 import ij.plugin.MontageMaker;
 import ij.plugin.PlugIn;
 import ij.plugin.StackCombiner;
@@ -169,7 +168,7 @@ public class JACoP_B implements PlugIn {
 		
 		// Because we will be looping ROIs no matter what
 		// we need to have a ROI counter equal to at least 1
-		// Otherwise it will exit the loop without having done anythin
+		// Otherwise it will exit the loop without having done anything
 		int rcount = (rm.getCount()>0) ? rm.getCount() : 1;
 		
 		// LOOP 1: All ROIs, or single ROI if hasRoiSets is false
@@ -500,8 +499,8 @@ public class JACoP_B implements PlugIn {
 		// Pick up the data
 		if (nImages == 0) imageFolder = new File(Prefs.get(PREFIX+"imagefolder", ""));
 		
-		channelA = Prefs.getInt(PREFIX+"channelA", 1);
-		channelB = Prefs.getInt(PREFIX+"channelB", 1);
+		channelA = (int) Prefs.get(PREFIX+"channelA", 1);
+		channelB = (int) Prefs.get(PREFIX+"channelB", 1);
 		
 		thrA = Prefs.get(PREFIX+"thrA", "Otsu");
 		thrB = Prefs.get(PREFIX+"thrB", "Otsu");
@@ -536,8 +535,8 @@ public class JACoP_B implements PlugIn {
 		GenericDialogPlus d = new GenericDialogPlus("Colocalization Parameters");
 		
 		if (nImages == 0) d.addDirectoryField("Image_Folder", "");
-		d.addNumericField("Channel_A", 1, 0);
-		d.addNumericField("Channel_B", 2, 0);
+		d.addNumericField("Channel_A", channelA, 0);
+		d.addNumericField("Channel_B", channelB, 0);
 		
 		List<String> thrs= new ArrayList<String>(Arrays.asList(Thresholder.methods));
 		thrs.add("Costes Auto-Threshold");

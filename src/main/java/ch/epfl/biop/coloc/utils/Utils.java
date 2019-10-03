@@ -157,14 +157,14 @@ public class Utils {
 	 * Ensures ROIs are properly cared for
 	 */
 	public static ImagePlus cropTime(ImagePlus imp, Roi roi, int timepoint, Boolean is_crop) {
-		
+
 		
 		int nC = imp.getNChannels();
 		int nZ = imp.getNSlices();
 		
 		// We are working on imp, which is unchanged
 		Duplicator dup = new Duplicator();
-		
+
 		
 		// if we want to crop the ROI, do it here
 		if(is_crop) {
