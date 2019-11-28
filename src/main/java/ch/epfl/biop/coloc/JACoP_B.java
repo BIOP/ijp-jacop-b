@@ -569,10 +569,10 @@ public class JACoP_B implements PlugIn {
         d.addCheckbox("Perform_Costes_Randomization (2D, BIOP implementation, No Threshold)", doRandomCostes);
         d.addCheckbox("Perform_Costes_Randomization_Mask (2D, BIOP implementation, With Threshold)", doRandomCostesMask);
 
-		d.addCheckbox("Show Costes Plot", showCostesPlot);
-		d.addCheckbox("Show Costes Random Image", showCostesRandomImage);
-        d.addNumericField("Block Size for Costes Randomization (pixel)", randCostesBlockSize, 0);
-        d.addNumericField("Number of shuffling for Costes Randomization", randCostesShuffleNumber, 0);
+		d.addCheckbox("Show_Costes_Plot", showCostesPlot);
+		d.addCheckbox("Show_Costes_Random_Image", showCostesRandomImage);
+        d.addNumericField("Costes_Block_Size (pixel)", randCostesBlockSize, 0);
+        d.addNumericField("Costes_Number_Of_Shuffling", randCostesShuffleNumber, 0);
 		d.addCheckbox("Set Advanced Parameters", use_advanced);
 		
 		d.showDialog();
@@ -663,9 +663,9 @@ public class JACoP_B implements PlugIn {
     	GenericDialogPlus d = new GenericDialogPlus("Advanced Parameters");
     	d.addCheckbox("Auto-Adjust Fluorogram Per Image", true);
     	d.addMessage("Otherwise, use parameters below");
-    	d.addNumericField("Fluorogram_Bins", 256, 0);
-		d.addNumericField("Fluorogram_Min", 0, 0);
-		d.addNumericField("Fluorogram_Max", 255, 0);
+    	d.addNumericField("Fluorogram_Bins", fluo_bins, 0);
+		d.addNumericField("Fluorogram_Min", fluo_min, 0);
+		d.addNumericField("Fluorogram_Max", fluo_max, 0);
 		
 		d.showDialog();
 		if(d.wasCanceled()) {

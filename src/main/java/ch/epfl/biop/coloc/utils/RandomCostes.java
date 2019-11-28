@@ -36,8 +36,6 @@ public class RandomCostes {
         this.imgA=imgA.duplicate();
         this.imgB=imgB.duplicate();
 
-
-
         roi = imgA.getRoi();
         if (roi==null) {
             roi = new Roi(0,0,imgA.getWidth(), imgA.getHeight());

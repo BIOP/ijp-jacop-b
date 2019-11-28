@@ -1618,6 +1618,7 @@ public class ImageColocalizer {
 		if(thrMetA.matches("\\d*")) {
 			this.thrA = Integer.valueOf(thrMetA);
 			impA.getProcessor().setThreshold(this.thrA , impA.getProcessor().getMaxThreshold(), ImageProcessor.RED_LUT);
+            impA.setRoi(roi);
 
 		} else {
 		
@@ -1641,6 +1642,7 @@ public class ImageColocalizer {
 			//IJ.log("Threshold "+thrMetB+" matches regex");
 			this.thrB = Integer.valueOf(thrMetB);
 			impB.getProcessor().setThreshold(this.thrB , impB.getProcessor().getMaxThreshold(), ImageProcessor.RED_LUT);
+            impB.setRoi(roi);
 			
 		} else {
 		
