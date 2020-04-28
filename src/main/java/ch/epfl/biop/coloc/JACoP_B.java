@@ -99,6 +99,13 @@ public class JACoP_B implements PlugIn {
     int costesBlockSize = 5;
 
     int costesShufflingNumber = 100;
+
+	// For Costes Plot Output
+	boolean set_costes_graph_bounds = false;
+
+	double xmin_costes_graph;
+
+	double xmax_costes_graph;
 	
 	@Override
 	public void run(String arg) {
@@ -343,8 +350,8 @@ public class JACoP_B implements PlugIn {
 		if(doOverlap) ic.Overlap();
 		if(doICA) ic.ICA();
 		if(doFluorogram) ic.CytoFluo();
-        if(doRandomCostes) ic.RandomCostes2D(false, costesBlockSize, costesShufflingNumber, showCostesPlot, showCostesRandomImage);
-        if(doRandomCostesMask) ic.RandomCostes2D(true, costesBlockSize, costesShufflingNumber, showCostesPlot, showCostesRandomImage);
+        if(doRandomCostes) ic.RandomCostes2D(false, costesBlockSize, costesShufflingNumber, showCostesPlot, showCostesRandomImage, set_costes_graph_bounds, xmin_costes_graph, xmax_costes_graph);
+        if(doRandomCostesMask) ic.RandomCostes2D(true, costesBlockSize, costesShufflingNumber, showCostesPlot, showCostesRandomImage, set_costes_graph_bounds, xmin_costes_graph, xmax_costes_graph);
 		// Add Areas
 		ic.Areas();
 		
@@ -668,9 +675,12 @@ public class JACoP_B implements PlugIn {
     private Boolean advancedDialog() {
 		// Advanced features, like Fluorogram bins
 		is_auto_fluo = Prefs.get(PREFIX+"is_auto_fluo", is_auto_fluo);
-		fluo_bins = Prefs.getInt(PREFIX+"channelA", fluo_bins);
-		fluo_min = Prefs.getInt(PREFIX+"channelA", fluo_min);
-		fluo_max = Prefs.getInt(PREFIX+"channelA", fluo_max);
+		fluo_bins = Prefs.getInt(PREFIX+"fluo_bins", fluo_bins);
+		fluo_min = Prefs.getInt(PREFIX+"fluo_min", fluo_min);
+		fluo_max = Prefs.getInt(PREFIX+"fluo_max", fluo_max);
+		set_costes_graph_bounds = Prefs.getBoolean(PREFIX+"set_costes_graph_bounds", false);
+		xmin_costes_graph = Prefs.get(PREFIX+"xmin_costes_graph", -1);
+		xmax_costes_graph = Prefs.get(PREFIX+"xmax_costes_graph", 1);
 
     	GenericDialogPlus d = new GenericDialogPlus("Advanced Parameters");
     	d.addCheckbox("Auto-Adjust Fluorogram Per Image", true);
@@ -678,6 +688,9 @@ public class JACoP_B implements PlugIn {
     	d.addNumericField("Fluorogram_Bins", fluo_bins, 0);
 		d.addNumericField("Fluorogram_Min", fluo_min, 0);
 		d.addNumericField("Fluorogram_Max", fluo_max, 0);
+		d.addCheckbox("set_costes_graph_bounds", set_costes_graph_bounds);
+		d.addNumericField("xmin_costes_graph", xmin_costes_graph, 3);
+		d.addNumericField("xmax_costes_graph", xmax_costes_graph, 3);
 		
 		d.showDialog();
 		if(d.wasCanceled()) {
@@ -688,11 +701,18 @@ public class JACoP_B implements PlugIn {
 		fluo_bins = (int) d.getNextNumber();
 		fluo_min  = (int) d.getNextNumber();
 		fluo_max  = (int) d.getNextNumber();
+		set_costes_graph_bounds = d.getNextBoolean();
+		xmin_costes_graph = d.getNextNumber();
+		xmax_costes_graph = d.getNextNumber();
 		
 		Prefs.set(PREFIX+"is_auto_fluo", is_auto_fluo);
 		Prefs.set(PREFIX+"fluo_bins", fluo_bins);
 		Prefs.set(PREFIX+"fluo_min", fluo_min);
 		Prefs.set(PREFIX+"fluo_max", fluo_max);
+
+		Prefs.set(PREFIX+"set_costes_graph_bounds", set_costes_graph_bounds);
+		Prefs.set(PREFIX+"xmin_costes_graph", xmin_costes_graph);
+		Prefs.set(PREFIX+"xmax_costes_graph", xmax_costes_graph);
 
 		return true;
 	}

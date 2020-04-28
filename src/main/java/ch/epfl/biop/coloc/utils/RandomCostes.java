@@ -37,7 +37,6 @@ public class RandomCostes {
     public double pValueIsCorrelated = Double.NaN;
     public double pValueIsAntiCorrelated = Double.NaN;
 
-
     public RandomCostes(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean binarize, int thrA, int thrB) {
 
         this.imgA=imgA.duplicate();
@@ -222,7 +221,7 @@ public class RandomCostes {
     StandardDeviation sd;
     double[] valuesShuffling;
 
-    public Plot getPearsonDistributionGraph() {
+    public Plot getPearsonDistributionGraph(boolean userDefinedLimits, double userMin, double userMax) {
 
         double binRes = 0.25;
         //double binSpacing = binRes*sd.getResult();
@@ -248,16 +247,16 @@ public class RandomCostes {
 
         double normFactor = 1/Math.sqrt(2*Math.PI);
         for (int i=0;i<xs.length;i++) {
-            xs[i]=(minBin+i)*binRes;
+            xs[i]=(minBin+i)*binRes*sd.getResult();
             bins[i]/=(valuesShuffling.length);
             bins[i]/=binRes;
-            gaussFit[i]= Math.exp(-xs[i]*xs[i]/2)*normFactor;
+            gaussFit[i]= Math.exp(-xs[i]*xs[i]/(2*sd.getResult()*sd.getResult()))*normFactor;
         }
 
         String titlePlot = "Random Costes";
         if (binarize) {titlePlot+=" Mask";}
 
-        Plot plot = new Plot(titlePlot,"Normalized Pearson","Probability");
+        Plot plot = new Plot(titlePlot,"Pearson","Probability");
 
         plot.setColor("black");
         plot.setLineWidth(3);
@@ -265,8 +264,11 @@ public class RandomCostes {
         plot.addPoints(xs,bins, Plot.CIRCLE);
 
         plot.setColor("red");
-        plot.addPoints(new double[]{pearsonNormalized,pearsonNormalized},new double[]{0,0.4},Plot.LINE );
-
+        plot.addPoints(new double[]{pearson,pearson},new double[]{0,0.4},Plot.LINE );
+        //plot.setLimits(plot.getLimits()[0], plot.getLimits()[1], 0,0.4);
+        if (userDefinedLimits) {
+            plot.setLimits(userMin, userMax, 0,0.4);
+        }
         return plot;
     }
 

@@ -48,6 +48,7 @@ import ij.process.ShortProcessor;
  *
  * @author Fabrice Cordelieres
  * @author Olivier Burri
+ * @author Nicolas Chiaruttini
  */
 public class ImageColocalizer {
     int width, height, nbSlices, depth, length, widthCostes, heightCostes, nbsliceCostes, lengthCostes;
@@ -57,8 +58,7 @@ public class ImageColocalizer {
     double Amean, Bmean;
     Calibration cal, micronCal;
     Counter3D countA, countB;
-    ResultsTable rt; 
-    
+    ResultsTable rt;
     
     //Values for stats
     boolean doThat;
@@ -1097,8 +1097,9 @@ public class ImageColocalizer {
         
     }
 
-    public void RandomCostes2D(boolean binarize, int squareSize, int nShuffling, boolean showPlot, boolean showShuffledImage) {
-        randomCostes2D(impA,impB,squareSize,nShuffling,binarize, showPlot, showShuffledImage);
+
+    public void RandomCostes2D(boolean binarize, int squareSize, int nShuffling, boolean showPlot, boolean showShuffledImage, boolean costesGraphBoundsUserSet, double xminCostesGraph, double xmaxCostesGraph) {
+        randomCostes2D(impA,impB,squareSize,nShuffling,binarize, showPlot, showShuffledImage, costesGraphBoundsUserSet, xminCostesGraph, xmaxCostesGraph);
     }
 
     public ImagePlus randomCostesMaskPlot;
@@ -1120,7 +1121,12 @@ public class ImageColocalizer {
      *
      */
 
-    public RandomCostes randomCostes2D(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean threshold, boolean showPlot, boolean showSampleImage) {
+
+
+    public RandomCostes randomCostes2D(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean threshold, boolean showPlot, boolean showSampleImage,
+                                       boolean costesGraphBoundsUserSet,
+                                               double xminCostesGraph,
+                                               double xmaxCostesGraph) {
         RandomCostes rc = new RandomCostes(imgA,imgB, squareSize, nShuffling,threshold, thrA, thrB);
         rc.compute();
         if (threshold) {
@@ -1130,9 +1136,13 @@ public class ImageColocalizer {
         }
         if (showPlot) {
             if (threshold) {
-                randomCostesMaskPlot = rc.getPearsonDistributionGraph().getImagePlus();
+                randomCostesMaskPlot = rc.getPearsonDistributionGraph(costesGraphBoundsUserSet,
+                        xminCostesGraph,
+                        xmaxCostesGraph).getImagePlus();
             } else {
-                randomCostesPlot = rc.getPearsonDistributionGraph().getImagePlus();
+                randomCostesPlot = rc.getPearsonDistributionGraph(costesGraphBoundsUserSet,
+                        xminCostesGraph,
+                        xmaxCostesGraph).getImagePlus();
             }
         }
         if (threshold) {
