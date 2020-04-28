@@ -11,6 +11,8 @@ import ij.process.ImageProcessor;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
+
+import org.apache.commons.math3.special.Erf;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
@@ -30,6 +32,11 @@ public class RandomCostes {
     public Roi roi;
 
     public double pearsonNormalized = Double.NaN;
+    public double pearson = Double.NaN;
+
+    public double pValueIsCorrelated = Double.NaN;
+    public double pValueIsAntiCorrelated = Double.NaN;
+
 
     public RandomCostes(ImagePlus imgA, ImagePlus imgB, int squareSize, int nShuffling, boolean binarize, int thrA, int thrB) {
 
@@ -165,7 +172,10 @@ public class RandomCostes {
 
         double shufflingMean = (sum/(double)nShuffling);
         double shufflingStd = sd.getResult();
-        pearsonNormalized = (pearson-shufflingMean) / shufflingStd;
+        this.pearsonNormalized = (pearson-shufflingMean) / shufflingStd;
+        this.pearson = pearson;
+        this.pValueIsCorrelated = Erf.erfc(-this.pearsonNormalized)/2.0;
+        this.pValueIsAntiCorrelated = Erf.erfc(this.pearsonNormalized)/2.0;
 
         imp.changes=false;
 

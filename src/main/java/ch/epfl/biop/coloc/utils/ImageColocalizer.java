@@ -1136,11 +1136,21 @@ public class ImageColocalizer {
             }
         }
         if (threshold) {
+
             rt.addValue("Random Pearson Costes 2D (Mask)", rc.pearsonNormalized);
-            IJ.log("\nNormalized random Pearson Costes 2D (Mask) nShuffle = "+nShuffling+" block Size = "+squareSize+" \nnpc="+round(rc.pearsonNormalized,3));
+
+            rt.addValue("Random Pearson Costes 2D (Mask) pValueCorrelated", rc.pValueIsCorrelated);
+
+            rt.addValue("Random Pearson Costes 2D (Mask) pValueAntiCorrelated", rc.pValueIsAntiCorrelated);
+            IJ.log("\nNormalized random Pearson Costes 2D (Mask) nShuffle = "+nShuffling+" block Size = "+squareSize+" \nnpc="+round(rc.pearsonNormalized,3)+" \npValueCorrelated="+rc.pValueIsCorrelated+" \npValueAntiCorrelated="+rc.pValueIsAntiCorrelated);
         } else {
             rt.addValue("Random Pearson Costes 2D", rc.pearsonNormalized);
-            IJ.log("\nNormalized random Pearson Costes 2D nShuffle = "+nShuffling+" block Size = "+squareSize+" \nnpc="+round(rc.pearsonNormalized,3));
+
+            rt.addValue("Random Pearson Costes 2D pValueCorrelated", rc.pValueIsCorrelated);
+
+            rt.addValue("Random Pearson Costes 2D pValueAntiCorrelated", rc.pValueIsAntiCorrelated);
+
+            IJ.log("\nNormalized random Pearson Costes 2D nShuffle = "+nShuffling+" block Size = "+squareSize+" \nnpc="+round(rc.pearsonNormalized,3)+" \npValueCorrelated="+rc.pValueIsCorrelated+" \npValueAntiCorrelated="+rc.pValueIsAntiCorrelated);
         }
         return rc;
     }
