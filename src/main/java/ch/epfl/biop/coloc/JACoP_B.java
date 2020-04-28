@@ -107,20 +107,33 @@ public class JACoP_B implements PlugIn {
 	
 		//Switch from folder to single image mode			
 		//Setup the image and all settings
-		
+
 		
 		if (this.imageFolder != null) {
 			// Run coloc for a folder
 			String[] files = imageFolder.list();
 			for(String file : files) {
 				this.imp = IJ.openImage(new File(this.imageFolder, file).getAbsolutePath());
-				runColoc();
+				// Sanity check :
+				// Costes cannot be done in 3D yet, unless 'consider slices separately is ticked
+				// TODO : Costes 3D
+				if (((this.doRandomCostes) || (this.doRandomCostesMask))&&(imp.getNSlices()>1)&&(!this.doSeparateZ)) {
+					IJ.error("Costes only works if 'consider Z as separate slices' is checked" );
+				} else {
+					runColoc();
+				}
 
 			}
 		} else {
 			this.imp = IJ.getImage();
-			//imp.
-			runColoc();
+			// Sanity check :
+			// Costes cannot be done in 3D yet, unless 'consider slices separately is ticked
+			// TODO : Costes 3D
+			if (((this.doRandomCostes) || (this.doRandomCostesMask))&&(imp.getNSlices()>1)&&(!this.doSeparateZ)) {
+				IJ.error("Costes only works if 'consider Z as separate slices' is checked" );
+			} else {
+				runColoc();
+			}
 		}
 	}
 
@@ -464,7 +477,6 @@ public class JACoP_B implements PlugIn {
 	        	scaledFluo = Utils.scale(fluo, montage.getWidth());
 	        } else {
 	        	scaledFluo = Utils.scale(fluo, montage.getHeight());
-
 	        }
 			
 	        ImageStack flst = scaledFluo.getStack();
@@ -698,7 +710,7 @@ public class JACoP_B implements PlugIn {
 		// Make some nice images
 	//	ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
 		// ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
-        ImagePlus imp = IJ.openImage("C:\\Users\\chiarutt\\Desktop\\confocal-series-test.tif");
+        ImagePlus imp = IJ.openImage("C:\\Users\\nicol\\Desktop\\confocal-series.tif");
 		int[] xpoints = {264,139,89,203,331,322,190};
 		int[] ypoints = {114,118,230,269,265,153,178};
 		imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));
