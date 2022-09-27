@@ -5,15 +5,17 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>27.0.1</version>
+		<version>33.2.0</version>
 		<relativePath />
 	</parent>
-	
+
+	<artifactId>JACoP_B</artifactId>
+	<description>An update to the JACoP Plugin that helps in the management of ROIs, Z sections and helps generate cleaner reports</description>
 	<groupId>ch.epfl.biop.coloc</groupId>
 	<version>1.1.7-SNAPSHOT</version>
 
 	<name>JACoP_B</name>
-	<url>http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:jacop_2.0:just_another_colocalization_plugin:start</url>
+	<url>https://imagej.net/plugins/jacop</url>
 	<inceptionYear>2009</inceptionYear>
 	<organization>
 		<name>BioImaging And Optics Platform (BIOP)</name>
@@ -98,37 +100,38 @@
 	<mailingLists>
 		<mailingList>
 			<name>ImageJ Forum</name>
-			<archive>http://forum.imagej.net/</archive>
+			<archive>https://forum.image.sc/</archive>
 		</mailingList>
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://c4science.ch/source/ijp-jacop-b</connection>
-		<developerConnection>scm:git://c4science.ch/source/ijp-jacop-b</developerConnection>
+		<connection>scm:git:https://github.com/BIOP/ijp-jacop-b</connection>
+		<developerConnection>scm:git:git@github.com:BIOP/ijp-jacop-b</developerConnection>
+		<url>https://github.com/BIOP/ijp-jacop-b</url>
 		<tag>HEAD</tag>
-		<url>https://c4science.ch/source/ijp-jacop-b</url>
 	</scm>
 	<issueManagement>
-		<system>none</system>
-		<url>N/A</url>
+		<system>GitHub Issues</system>
+		<url>https://github.com/BIOP/ijp-jacop-b/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<system>none</system>
-		<url>https://google.com</url>
+		<system>GitHub Actions</system>
+		<url>https://github.com/BIOP/ijp-jacop-b/actions</url>
 	</ciManagement>
 
 	<properties>
 		<license.licenseName>gpl_v3</license.licenseName>
 		<license.copyrightOwners>Susanne Bolte, Fabrice P. Cordelières, Olivier Burri</license.copyrightOwners>
-		<imagej.app.directory>C:/Fiji/</imagej.app.directory>
+		<!--<imagej.app.directory>C:/Fiji/</imagej.app.directory>-->
 		<main-class>ch.epfl.biop.coloc.JACoP_B</main-class>
 		<package-name>ch.epfl.biop.coloc</package-name>
+		<Multi_Stack_Montage.version>1.1.1</Multi_Stack_Montage.version>
 	</properties>
 
 	<repositories>
 		<repository>
-			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
+			<id>scijava.public</id>
+			<url>https://maven.scijava.org/content/groups/public</url>
 		</repository>
 	</repositories>
 
@@ -146,7 +149,7 @@
 		<dependency>
 		  <groupId>ch.epfl.biop.montage</groupId>
 		  <artifactId>Multi_Stack_Montage</artifactId>
-		  <version>1.1.0</version>
+		  <version>${Multi_Stack_Montage.version}</version>
 		</dependency>
 
 		<dependency>
@@ -170,9 +173,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
-			<!-- <version>3.6.1</version> -->
 		</dependency>
 	</dependencies>
-	<artifactId>JACoP_B</artifactId>
-	<description>An update to the JACoP Plugin that helps in the management of ROIs, Z sections and helps generate cleaner reports</description>
+
 </project>

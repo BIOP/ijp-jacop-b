@@ -728,9 +728,8 @@ public class JACoP_B implements PlugIn {
 		ij.exitWhenQuitting(true);
 		
 		// Make some nice images
-	//	ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
-		// ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
-        ImagePlus imp = IJ.openImage("C:\\Users\\nicol\\Desktop\\confocal-series.tif");
+	    // ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
+		ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
 		int[] xpoints = {264,139,89,203,331,322,190};
 		int[] ypoints = {114,118,230,269,265,153,178};
 		imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));
