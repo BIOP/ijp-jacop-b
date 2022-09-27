@@ -1,9 +1,18 @@
 # Eclipse #
+.project
+.classpath
 /.classpath
 /.project
 /.settings/
+
 # IntelliJ #
 /.idea/
+.iml
+*.iml
 
 # Maven #
 /target/
+
+# Scijava release glitches #
+*.releaseBackup
+*.tmp.bak
