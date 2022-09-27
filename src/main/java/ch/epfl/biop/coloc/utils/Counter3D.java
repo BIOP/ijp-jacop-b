@@ -649,13 +649,13 @@ public class Counter3D {
         }
     }
     
-    /** Returns an ResultsTable containing statistics on objects:</P>
-     * Volume and Surface: number of pixel forming the structures and at its surface respectively.</P>
-     * StdDev, Median, IntDen, Min and Max: standard deviation, median, sum, minimum and maximum of all intensities for the current object.</P>
-     * X, Y and Z: coordinates of the current object's centro�d.</P>
-     * XM, YM and ZM: coordinates of the current object's centre of mass.</P>
-     * BX, BY and BZ: coordinates of the top-left corner of the current object's bounding box.</P>
-     * B-width, B-height and B-depth: current object's bounding box dimensions.</P>
+    /** Returns an ResultsTable containing statistics on objects:
+     * Volume and Surface: number of pixel forming the structures and at its surface respectively.
+     * StdDev, Median, IntDen, Min and Max: standard deviation, median, sum, minimum and maximum of all intensities for the current object.
+     * X, Y and Z: coordinates of the current object's centroid.
+     * XM, YM and ZM: coordinates of the current object's centre of mass.
+     * BX, BY and BZ: coordinates of the top-left corner of the current object's bounding box.
+     * B-width, B-height and B-depth: current object's bounding box dimensions.
      */
     public void showStatistics(){
         if (!this.getObjects) this.getObjects();
@@ -721,9 +721,9 @@ public class Counter3D {
         IJ.log(this.title+": "+this.nbObj+" objects detected (Size filter set to "+this.minSize+"-"+this.maxSize+" voxels, threshold set to: "+this.thr+").");
     }
     
-    /** Returns an ResultsTable containing coordinates of the surface pixels for all objects:</P>
-     * Object ID: current object number.</P>
-     * X, Y and Z: coordinates of the current object's surface pixel.</P>
+    /** Returns an ResultsTable containing coordinates of the surface pixels for all objects:
+     * Object ID: current object number.
+     * X, Y and Z: coordinates of the current object's surface pixel.
      */
     public void showSurfPix(){
         if (!this.getSurfCoord) this.populateSurfPixCoord();
@@ -740,9 +740,9 @@ public class Counter3D {
     }
     
     /** Returns the index where to find the informations corresponding to pixel (x, y, z).
-     * @param x coordinate of the pixel.
-     * @param y coordinate of the pixel.
-     * @param z coordinate of the pixel.
+     * @param m coordinate of the pixel.
+     * @param n coordinate of the pixel.
+     * @param o coordinate of the pixel.
      * @return the index where to find the informations corresponding to pixel (x, y, z).
      */
     private int offset(int m,int n,int o){
@@ -796,8 +796,8 @@ public class Counter3D {
     }
     
     /** Replaces one object ID by another within the objID array.
-     * @param old value to be replaced.
-     * @param new value to be replaced by. </P>
+     * @param oldVal value to be replaced.
+     * @param newVal value to be replaced by.
      * NB: the arrays carrying the number of pixels/surface pixels carrying those IDs will also be updated.
      */
     private void replaceID(int oldVal, int newVal){
