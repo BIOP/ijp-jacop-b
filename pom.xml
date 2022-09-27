@@ -126,6 +126,9 @@
 		<main-class>ch.epfl.biop.coloc.JACoP_B</main-class>
 		<package-name>ch.epfl.biop.coloc</package-name>
 		<Multi_Stack_Montage.version>1.1.1</Multi_Stack_Montage.version>
+
+		<!-- NB: Deploy releases to the SciJava Maven repository. -->
+		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 	</properties>
 
 	<repositories>
