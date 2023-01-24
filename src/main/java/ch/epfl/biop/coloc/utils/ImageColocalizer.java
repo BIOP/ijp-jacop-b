@@ -2,7 +2,7 @@
  * #%L
  * An update to the JACoP Plugin that helps in the management of ROIs, Z sections and helps generate cleaner reports
  * %%
- * Copyright (C) 2009 - 2022 Susanne Bolte, Fabrice P. Cordelières, Olivier Burri
+ * Copyright (C) 2009 - 2023 Susanne Bolte, Fabrice P. Cordelières, Olivier Burri
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
