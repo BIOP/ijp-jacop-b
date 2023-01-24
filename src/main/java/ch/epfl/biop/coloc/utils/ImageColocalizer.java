@@ -23,6 +23,9 @@ package ch.epfl.biop.coloc.utils;
 
 import java.awt.Color;
 
+import ij.gui.Overlay;
+import sc.fiji.coloc.algorithms.SpearmanRankCorrelation;
+
 /*  JACoP: "Just Another Colocalization Plugin..." v1, 13/02/06
     Fabrice P Cordelieres, fabrice.cordelieres at curie.u-psud.fr
     Susanne Bolte, Susanne.bolte@isv.cnrs-gif.fr
@@ -111,6 +114,10 @@ public class ImageColocalizer {
     /** Creates a new instance of ImageColocalizer */
     public ImageColocalizer(ImagePlus ipA, ImagePlus ipB) {
         setup(ipA, ipB, new Calibration());
+    }
+
+    public ImageColocalizer(ImagePlus ipA, ImagePlus ipB, Calibration cal) {
+        setup(ipA, ipB, cal);
     }
     
     /*
@@ -237,11 +244,41 @@ public class ImageColocalizer {
         IJ.log("\nPearson's Coefficient:\nr="+round(pearsons_coeff,3));
         rt.addValue("Pearson's Coefficient", pearsons_coeff);
     }
-    
-    /*public void Pearson(int TA, int TB) {
-        doThat=true;
-        IJ.log("\nPearson's Coefficient using thesholds:\nr="+round(linreg(A,B,TA,TB)[2],3));
-    }*/
+
+    public void SpearmanRank() {
+        this.doThat=true;
+
+        SpearmanRankCorrelation corr = new SpearmanRankCorrelation();
+
+        int countPix = 0;
+
+        // No threshold, takes ROI and mask into account
+
+        for (int i=0; i<M.length; i++){
+            if (M[i]>0) countPix++;
+        }
+
+        double[][] data = new double[countPix][2];
+        countPix = 0;
+        for (int i = 0; i<A.length; i++) {
+            if (M[i]>0) {
+                data[countPix][0] = A[i];
+                countPix++;
+            }
+        }
+        countPix = 0;
+        for (int i = 0; i<B.length; i++) {
+            if (M[i]>0) {
+                data[countPix][1] = B[i];
+                countPix++;
+            }
+        }
+
+        double spearmanrank_coeff = corr.calculateSpearmanRank(data);
+
+        IJ.log("\nSpearman's Rank Coefficient:\nr="+round(spearmanrank_coeff,3));
+        rt.addValue("Spearman's Rank Coefficient", spearmanrank_coeff);
+    }
     
     public void Overlap(){
     	double num=0;
@@ -1720,7 +1757,7 @@ public class ImageColocalizer {
 		return impB;
 	}
 	
-	public ImagePlus getRGBImage(ImagePlus imp, Boolean is_zProject) {
+	public ImagePlus getRGBImage(ImagePlus imp, Boolean is_zProject, float strokeWidth) {
 		
 		imp.killRoi();
 		ImagePlus impr = imp.duplicate();
@@ -1733,28 +1770,28 @@ public class ImageColocalizer {
 			impr = zp.getProjection();
 		}
 		
-		return flattenRoi(impr);
+		return flattenRoi(impr, strokeWidth);
 	}
 
-    public ImagePlus getRandomCostesMaskPlot(Boolean is_Z) {
-        return getRGBImage(impA, is_Z);
+    public ImagePlus getRandomCostesMaskPlot(Boolean is_Z, float strokeWidth) {
+        return getRGBImage(impA, is_Z, strokeWidth);
     }
 
-	public ImagePlus getRGBImageA(Boolean is_Z) {
-		return getRGBImage(impA, is_Z);
+	public ImagePlus getRGBImageA(Boolean is_Z, float strokeWidth) {
+		return getRGBImage(impA, is_Z, strokeWidth);
 	}
 	
-	public ImagePlus getRGBImageB(Boolean is_Z) {
-		return getRGBImage(impB, is_Z);
+	public ImagePlus getRGBImageB(Boolean is_Z, float strokeWidth) {
+		return getRGBImage(impB, is_Z, strokeWidth);
 	}
 	
-	public ImagePlus getRGBColocImage() {
+	public ImagePlus getRGBColocImage(float strokeWidth) {
 		// This should return an rgb image of the composite of the two channels, with the pixels as a mask
 		// Make a composite of the two images
 		ImagePlus[] images = {impA, impB};
 		
 		ImagePlus comp = RGBStackMerge.mergeChannels(images, true);
-		return flattenRoi(comp);
+		return flattenRoi(comp, strokeWidth);
 		
 	}
 	
@@ -1767,13 +1804,13 @@ public class ImageColocalizer {
 		return Utils.binarize(impB, thrB);
 	}
 	
-	public ImagePlus getRGBMaskA() {
-		return flattenRoi(Utils.binarize(impA, thrA));
+	public ImagePlus getRGBMaskA(float strokeWidth) {
+		return flattenRoi(Utils.binarize(impA, thrA), strokeWidth);
 		
 	}
 	
-	public ImagePlus getRGBMaskB() {
-		return flattenRoi(Utils.binarize(impB, thrB));
+	public ImagePlus getRGBMaskB(float strokeWidth) {
+		return flattenRoi(Utils.binarize(impB, thrB), strokeWidth);
 		
 	}
 	
@@ -1804,21 +1841,23 @@ public class ImageColocalizer {
 		}
 	}
 	
-	public ImagePlus getRGBANDMask() {
-		return flattenRoi(getANDMask());
+	public ImagePlus getRGBANDMask(float strokeWidth) {
+		return flattenRoi(getANDMask(), strokeWidth);
 	}
 	
 	
 	
 	// Proper flattening of the ROI onto the image or stack
-	private ImagePlus flattenRoi(ImagePlus imp) {
+	private ImagePlus flattenRoi(ImagePlus imp, float strokeWidth) {
 		if(roi != null) {
-			roi.setStrokeWidth(2);
-			roi.setStrokeColor(roiColor);
-			imp.setOverlay(roi, roiColor, 2, null);
-			imp.setHideOverlay(false);
+            if (strokeWidth>0) {
+                roi.setStrokeColor(roiColor);
+                roi.setStrokeWidth(strokeWidth);
+                imp.setOverlay(new Overlay(roi));
+                imp.setHideOverlay(false);
+            }
 		} else {
-			// Make an empty overlay			
+			// Make an empty overlay
 			imp.setOverlay(new Roi(1, 1, 1, 1), new Color(0,0,0,0), 1, new Color(0,0,0,0));
 			imp.setHideOverlay(false);
 			
@@ -1837,6 +1876,9 @@ public class ImageColocalizer {
 	public void addResult(String name, int value) {
 		rt.addValue(name, value);
 	}
+    public void addResult(String name, double value) {
+        rt.addValue(name, value);
+    }
 	
 	public void addResult(String name, String value) {
 		rt.addValue(name, value);
@@ -1845,8 +1887,5 @@ public class ImageColocalizer {
 	public void removeLastRow() {
 		rt.deleteRow(rt.getCounter()-1);
 	}
-
-	
-
 	
 }

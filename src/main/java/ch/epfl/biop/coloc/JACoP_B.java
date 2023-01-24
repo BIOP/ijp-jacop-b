@@ -84,7 +84,7 @@ public class JACoP_B implements PlugIn {
 	
 	int mThrA, mThrB;
 	
-	Boolean doCostesThr=false, doPearsons=false, doOverlap=false, doManders=false, doFluorogram=false, doICA=false,
+	Boolean doCostesThr=false, doPearsons=false, doSpearmanRank=false, doOverlap=false, doManders=false, doFluorogram=false, doICA=false,
 			doRandomCostes = false, doRandomCostesMask = false, showCostesPlot=false, showCostesRandomImage=false;
 
 	Integer randCostesBlockSize, randCostesShuffleNumber;
@@ -127,6 +127,10 @@ public class JACoP_B implements PlugIn {
 	double xmin_costes_graph;
 
 	double xmax_costes_graph;
+
+	boolean hide_masks;
+
+	float stroke_width = 2;
 	
 	@Override
 	public void run(String arg) {
@@ -367,6 +371,7 @@ public class JACoP_B implements PlugIn {
 	 */
 	private ImagePlus runAnalysis(ImageColocalizer ic) {
 		if(doPearsons) ic.Pearson();
+		if(doSpearmanRank) ic.SpearmanRank();
 		if(doManders) ic.MM();
 		if(doOverlap) ic.Overlap();
 		if(doICA) ic.ICA();
@@ -377,34 +382,36 @@ public class JACoP_B implements PlugIn {
 		ic.Areas();
 		
 		// Define rows and columns here in case we want a vertical report
-		int rows = 3;
-		int columns = 2;
-		
+		int rows = -1;
+		int columns = -1;
 		
 		// Get the images and make a montage
 		ArrayList<ImagePlus> imgs = new ArrayList<ImagePlus>();
         
 		// Vertical montage
 		if(is_montage_vertical) {
-			imgs.add(ic.getRGBImageA(false));
-			imgs.add(ic.getRGBMaskA());
+			rows = 3;
+			columns = 2;
+
+			imgs.add(ic.getRGBImageA(false, stroke_width));
+			if (!hide_masks) imgs.add(ic.getRGBMaskA(stroke_width));
 			
-			imgs.add(ic.getRGBImageB(false));
-			imgs.add(ic.getRGBMaskB());
+			imgs.add(ic.getRGBImageB(false, stroke_width));
+			if (!hide_masks) imgs.add(ic.getRGBMaskB(stroke_width));
 			
-			imgs.add(ic.getRGBColocImage());
-			imgs.add(ic.getRGBANDMask());
+			imgs.add(ic.getRGBColocImage(stroke_width));
+			if (!hide_masks) imgs.add(ic.getRGBANDMask(stroke_width));
 
 			if ((showCostesRandomImage)&&(doRandomCostes)) {
-				imgs.add(ic.getRGBImage(ic.randomCostesExampleShuffledImg,false));
+				imgs.add(ic.getRGBImage(ic.randomCostesExampleShuffledImg,false, stroke_width));
 			}
 
 			if ((showCostesRandomImage)&&(doRandomCostesMask)) {
-				imgs.add(ic.getRGBImage(ic.randomCostesMaskExampleShuffledImg,false));
+				if (!hide_masks) imgs.add(ic.getRGBImage(ic.randomCostesMaskExampleShuffledImg,false, stroke_width));
 			}
 
 			if ((showCostesPlot)&&(doRandomCostes)) {
-				ImageProcessor resizedProcessor = ic.randomCostesPlot.getProcessor().resize(ic.getRGBMaskA().getWidth(), ic.getRGBMaskA().getHeight(), true);
+				ImageProcessor resizedProcessor = ic.randomCostesPlot.getProcessor().resize(ic.getRGBMaskA(stroke_width).getWidth(), ic.getRGBMaskA(stroke_width).getHeight(), true);
 				ImagePlus resizedImg = new ImagePlus();
 				resizedProcessor.invert();
 				resizedProcessor.setColor(Color.WHITE);
@@ -415,7 +422,7 @@ public class JACoP_B implements PlugIn {
 			}
 
 			if ((showCostesPlot)&&(doRandomCostesMask)) {
-				ImageProcessor resizedProcessor = ic.randomCostesMaskPlot.getProcessor().resize(ic.getRGBMaskA().getWidth(), ic.getRGBMaskA().getHeight(), true);
+				ImageProcessor resizedProcessor = ic.randomCostesMaskPlot.getProcessor().resize(ic.getRGBMaskA(stroke_width).getWidth(), ic.getRGBMaskA(stroke_width).getHeight(), true);
 				ImagePlus resizedImg = new ImagePlus();//imgs.add(ic.randomCostesPlot);
 				resizedProcessor.invert();
 				resizedProcessor.setColor(Color.WHITE);
@@ -433,16 +440,18 @@ public class JACoP_B implements PlugIn {
 			columns = 3;
 			rows = 2;
 
-			imgs.add(ic.getRGBImageA(false));
-			imgs.add(ic.getRGBImageB(false));
-			imgs.add(ic.getRGBColocImage());
+			if (hide_masks) rows = 1;
+
+			imgs.add(ic.getRGBImageA(false, stroke_width));
+			imgs.add(ic.getRGBImageB(false, stroke_width));
+			imgs.add(ic.getRGBColocImage(stroke_width));
 
 			if ((showCostesRandomImage)&&(doRandomCostes)) {
-				imgs.add(ic.getRGBImage(ic.randomCostesExampleShuffledImg,false));
+				imgs.add(ic.getRGBImage(ic.randomCostesExampleShuffledImg,false, stroke_width));
 			}
 
 			if ((showCostesPlot)&&(doRandomCostes)) {
-				ImageProcessor resizedProcessor = ic.randomCostesPlot.getProcessor().resize(ic.getRGBMaskA().getWidth(), ic.getRGBMaskA().getHeight(), true);
+				ImageProcessor resizedProcessor = ic.randomCostesPlot.getProcessor().resize(ic.getRGBMaskA(stroke_width).getWidth(), ic.getRGBMaskA(stroke_width).getHeight(), true);
 				ImagePlus resizedImg = new ImagePlus();//imgs.add(ic.randomCostesPlot);
 				resizedProcessor.invert();
 				resizedProcessor.setColor(Color.WHITE);
@@ -452,16 +461,18 @@ public class JACoP_B implements PlugIn {
 				imgs.add(resizedImg);
 			}
 
-			imgs.add(ic.getRGBMaskA());
-			imgs.add(ic.getRGBMaskB());
-			imgs.add(ic.getRGBANDMask());
+			if (!hide_masks) {
+				imgs.add(ic.getRGBMaskA(stroke_width));
+				imgs.add(ic.getRGBMaskB(stroke_width));
+				imgs.add(ic.getRGBANDMask(stroke_width));
 
-			if ((showCostesRandomImage)&&(doRandomCostesMask)) {
-				imgs.add(ic.getRGBImage(ic.randomCostesMaskExampleShuffledImg,false));
+				if ((showCostesRandomImage) && (doRandomCostesMask)) {
+					imgs.add(ic.getRGBImage(ic.randomCostesMaskExampleShuffledImg, false, stroke_width));
+				}
 			}
 
 			if ((showCostesPlot)&&(doRandomCostesMask)) {
-				ImageProcessor resizedProcessor = ic.randomCostesMaskPlot.getProcessor().resize(ic.getRGBMaskA().getWidth(), ic.getRGBMaskA().getHeight(), true);
+				ImageProcessor resizedProcessor = ic.randomCostesMaskPlot.getProcessor().resize(ic.getRGBMaskA(stroke_width).getWidth(), ic.getRGBMaskA(stroke_width).getHeight(), true);
 				ImagePlus resizedImg = new ImagePlus();//imgs.add(ic.randomCostesPlot);
 				resizedProcessor.invert();
 				resizedProcessor.setColor(Color.WHITE);
@@ -482,12 +493,12 @@ public class JACoP_B implements PlugIn {
         if(imgs.get(0).getNSlices() == 1) {
         	ImageStack montagestk = imgs.get(0).createEmptyStack();
             // Make a normal montage
-        	 	for(ImagePlus i : imgs) {
-        	 		montagestk.addSlice(i.getProcessor());
-        	 	}
-        	 	// Use Montage Maker
-        	 	MontageMaker mm = new MontageMaker();
-            	montage = mm.makeMontage2(new ImagePlus("for montage",montagestk), columns, rows, 1.0, 1, imgs.size(), 1, 0, false);
+			for(ImagePlus i : imgs) {
+				montagestk.addSlice(i.getProcessor());
+			}
+			// Use Montage Maker
+			MontageMaker mm = new MontageMaker();
+			montage = mm.makeMontage2(new ImagePlus("for montage",montagestk), columns, rows, 1.0, 1, imgs.size(), 1, 0, false);
 
         } else {
         	// We can use Oli's Stack Montage for convenience
@@ -498,7 +509,7 @@ public class JACoP_B implements PlugIn {
 		if(doFluorogram) {
 			ImagePlus fluo = (is_auto_fluo) ? ic.getFluorogramImage() : ic.getFluorogramImage(fluo_bins, fluo_min,fluo_max);
 			
-			ImagePlus scaledFluo = null;
+			ImagePlus scaledFluo;
 			
 			// Scale the fluorogram to the width or height of the image
 	        if(is_montage_vertical) {
@@ -517,7 +528,7 @@ public class JACoP_B implements PlugIn {
 			// Finally assemble them
 			StackCombiner sc = new StackCombiner();
 			
-			ImageStack montagefluo = null;
+			ImageStack montagefluo;
 	        if(is_montage_vertical) {
 	        	montagefluo = sc.combineVertically(montage.getStack(), scaledFluo.getStack());
 	        } else {
@@ -556,6 +567,7 @@ public class JACoP_B implements PlugIn {
 		is_stack_hist_z = Prefs.get(PREFIX+"is_stack_hist_z", false);
 		
 		doPearsons = Prefs.get(PREFIX+"doPearsons", false);
+		doSpearmanRank = Prefs.get(PREFIX+"doSpearmanRank", false);
 		doManders = Prefs.get(PREFIX+"doManders", false);
 		doOverlap = Prefs.get(PREFIX+"doOverlap", false);
 		doICA = Prefs.get(PREFIX+"doICA", false);
@@ -599,6 +611,7 @@ public class JACoP_B implements PlugIn {
 		d.addMessage("Colocalization Result Options");
 		
 		d.addCheckbox("Get_Pearsons Correlation", doPearsons);
+		d.addCheckbox("Get_SpearmanRank Correlation", doSpearmanRank);
 		d.addCheckbox("Get_Manders Coefficients", doManders);
 		d.addCheckbox("Get_Overlap Coefficients", doOverlap);
 		d.addCheckbox("Get_Li_ICA", doICA);
@@ -635,6 +648,7 @@ public class JACoP_B implements PlugIn {
 		
 		is_stack_hist_z = d.getNextBoolean();
 		doPearsons = d.getNextBoolean();
+		doSpearmanRank = d.getNextBoolean();
 		doManders = d.getNextBoolean();
 		doOverlap = d.getNextBoolean();
 		doICA = d.getNextBoolean();
@@ -667,6 +681,7 @@ public class JACoP_B implements PlugIn {
 		Prefs.set(PREFIX+"is_stack_hist_z", is_stack_hist_z);
 		
 		Prefs.set(PREFIX+"doPearsons", doPearsons);
+		Prefs.set(PREFIX+"doSpearmanRank", doSpearmanRank);
 		Prefs.set(PREFIX+"doManders", doManders);
 		Prefs.set(PREFIX+"doOverlap", doOverlap);
 		Prefs.set(PREFIX+"doICA", doICA);
@@ -702,6 +717,8 @@ public class JACoP_B implements PlugIn {
 		set_costes_graph_bounds = Prefs.getBoolean(PREFIX+"set_costes_graph_bounds", false);
 		xmin_costes_graph = Prefs.get(PREFIX+"xmin_costes_graph", -1);
 		xmax_costes_graph = Prefs.get(PREFIX+"xmax_costes_graph", 1);
+		hide_masks = Prefs.get(PREFIX+"hide_masks", hide_masks);
+		stroke_width = (float) Prefs.getDouble(PREFIX+"stroke_width", stroke_width);
 
     	GenericDialogPlus d = new GenericDialogPlus("Advanced Parameters");
     	d.addCheckbox("Auto-Adjust Fluorogram Per Image", true);
@@ -712,6 +729,8 @@ public class JACoP_B implements PlugIn {
 		d.addCheckbox("set_costes_graph_bounds", set_costes_graph_bounds);
 		d.addNumericField("xmin_costes_graph", xmin_costes_graph, 3);
 		d.addNumericField("xmax_costes_graph", xmax_costes_graph, 3);
+		d.addCheckbox("hide_masks", hide_masks);
+		d.addNumericField("stroke_width", stroke_width, 3);
 		
 		d.showDialog();
 		if(d.wasCanceled()) {
@@ -725,6 +744,8 @@ public class JACoP_B implements PlugIn {
 		set_costes_graph_bounds = d.getNextBoolean();
 		xmin_costes_graph = d.getNextNumber();
 		xmax_costes_graph = d.getNextNumber();
+		hide_masks = d.getNextBoolean();
+		stroke_width = (float) d.getNextNumber();
 		
 		Prefs.set(PREFIX+"is_auto_fluo", is_auto_fluo);
 		Prefs.set(PREFIX+"fluo_bins", fluo_bins);
@@ -734,6 +755,8 @@ public class JACoP_B implements PlugIn {
 		Prefs.set(PREFIX+"set_costes_graph_bounds", set_costes_graph_bounds);
 		Prefs.set(PREFIX+"xmin_costes_graph", xmin_costes_graph);
 		Prefs.set(PREFIX+"xmax_costes_graph", xmax_costes_graph);
+		Prefs.set(PREFIX+"hide_masks", hide_masks);
+		Prefs.set(PREFIX+"stroke_width", stroke_width);
 
 		return true;
 	}
