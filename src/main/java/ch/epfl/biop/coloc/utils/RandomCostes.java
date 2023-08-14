@@ -249,11 +249,13 @@ public class RandomCostes {
 
         int minBin = (int) (-6/binRes);
         int maxBin = (int) (+6/binRes);
-        if (pearsonNormalized>0) {
-            maxBin = Math.max(maxBin, (int) (pearsonNormalized*1.5/binRes+1) );
-        }
 
-        if (pearsonNormalized<0) {
+        if (pearsonNormalized == Double.NaN) {
+        } else if (pearsonNormalized == Double.NEGATIVE_INFINITY) {
+        } else if (pearsonNormalized == Double.POSITIVE_INFINITY) {
+        } else if (pearsonNormalized>0) {
+            maxBin = Math.max(maxBin, (int) (pearsonNormalized*1.5/binRes+1) );
+        } else if (pearsonNormalized<0) {
             minBin = Math.min(minBin, (int) (pearsonNormalized*1.5/binRes-1) );
         }
 
@@ -263,7 +265,13 @@ public class RandomCostes {
 
         for (int iV=0;iV<valuesShuffling.length;iV++) {
             int iBin = (int) (  ((valuesShuffling[iV]/(sd.getResult()))/binRes-minBin)+0.5);
-            bins[iBin]++;
+            if (iBin<0) {
+                bins[0]++;
+            } else if (iBin>=bins.length) {
+                bins[bins.length-1]++;
+            } else {
+                bins[iBin]++;
+            }
         }
 
         double normFactor = 1/Math.sqrt(2*Math.PI);
