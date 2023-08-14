@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>33.2.0</version>
+		<version>36.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -125,7 +125,7 @@
 		<!--<imagej.app.directory>C:/Fiji/</imagej.app.directory>-->
 		<main-class>ch.epfl.biop.coloc.JACoP_B</main-class>
 		<package-name>ch.epfl.biop.coloc</package-name>
-		<Multi_Stack_Montage.version>1.1.1</Multi_Stack_Montage.version>
+		<Multi_Stack_Montage.version>1.1.2</Multi_Stack_Montage.version>
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
