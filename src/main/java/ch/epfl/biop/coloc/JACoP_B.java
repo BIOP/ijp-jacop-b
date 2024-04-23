@@ -193,7 +193,7 @@ public class JACoP_B implements PlugIn {
 		if(thrA.matches("Use Manual Threshold Below")) thrA = String.valueOf(mThrA);
 		if(thrB.matches("Use Manual Threshold Below")) thrB = String.valueOf(mThrB);
 		
-		if(thrA.matches("Costes Auto-Threshold") || thrA.matches("Costes Auto-Threshold"))  doCostesThr = true;
+		if(thrA.matches("Costes Auto-Threshold") || thrB.matches("Costes Auto-Threshold"))  doCostesThr = true;
 
 		// He who makes the magic happen
 		ImageColocalizer ic;
