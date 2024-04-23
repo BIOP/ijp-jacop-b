@@ -277,7 +277,7 @@ public class JACoP_B implements PlugIn {
 					// Because initializing the colocalizer writes a result already,
 					// We need to remove this ghost value
 					ic.removeLastRow();
-				} // END CONDITION IS STACK Z for getting threhsolds
+				} // END CONDITION IS STACK Z for getting thresholds
 				
 				
 				// The resulting image will be RGB and potentially a stack of T and Z

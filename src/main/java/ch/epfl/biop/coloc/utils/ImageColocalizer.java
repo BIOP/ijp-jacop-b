@@ -92,7 +92,7 @@ public class ImageColocalizer {
     private Plot fluorogram_plot, icq_plot, costes_plot, cff_plot;
     
     // OB: Add output for Costes Mask
-    private ImagePlus costesMask;
+    //private ImagePlus costesMask;
 	private Plot ica_a_plot;
 	private Plot ica_b_plot;
 	private ImagePlus costes_rand;
@@ -479,7 +479,7 @@ public class ImageColocalizer {
         //plot.show();
         
         // OB: Created local variable to be able to request the image as needed.
-        costesMask=NewImage.createRGBImage("Costes' mask",this.width,this.height,this.nbSlices,0);
+        ImagePlus costesMask=NewImage.createRGBImage("Costes' mask",this.width,this.height,this.nbSlices,0);
         costesMask.getProcessor().setValue(Math.pow(2, this.depth));
         for (int k=1; k<=this.nbSlices; k++){
         	costesMask.setSlice(k);
@@ -521,8 +521,9 @@ public class ImageColocalizer {
         // Seeing as it was set, set the thresholds here
         this.thrA = CostesThrA;
         this.thrB = CostesThrB;
-        
-        
+
+        setThresholds(thrA, thrB);
+
     }
     
     public void CCF(int CCFx){
@@ -1629,9 +1630,9 @@ public class ImageColocalizer {
 		return cff_plot;
 	}
 
-	public ImagePlus getCostesMask() {
+	/*public ImagePlus getCostesMask() {
 		return costesMask;
-	}
+	}*/
 
 	public Plot getICAaPlot() {
 		return ica_a_plot;
@@ -1665,9 +1666,18 @@ public class ImageColocalizer {
 		
 		this.thrA = thrA;
 		this.thrB = thrB;
+
+        if(roi!=null) {
+            for(int i=0; i<impA.getStackSize(); i++) {
+                impA.getStack().getProcessor(i+1).setMask(mask);
+                impB.getStack().getProcessor(i+1).setMask(mask);
+            }
+            impA.setRoi(roi);
+            impB.setRoi(roi);
+        }
+
 		impA.getProcessor().setThreshold(this.thrA , impA.getProcessor().getMaxThreshold(), ImageProcessor.NO_LUT_UPDATE);
 		impB.getProcessor().setThreshold(this.thrB , impB.getProcessor().getMaxThreshold(), ImageProcessor.NO_LUT_UPDATE);
-
 	}
 	
 	public int getThresholdA() {
