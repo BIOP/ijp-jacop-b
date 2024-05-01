@@ -47,9 +47,8 @@
 
 package ch.epfl.biop.coloc;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,8 +70,6 @@ import ij.plugin.Thresholder;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import net.imagej.ImageJ;
-
-import javax.script.ScriptException;
 
 public class JACoP_B implements PlugIn {
     
@@ -201,7 +198,7 @@ public class JACoP_B implements PlugIn {
 		ImageColocalizer ic;
 		
 		// Store results, as there might be many runs of ImageColocalizer
-		List<ImagePlus> results = new ArrayList<ImagePlus>();
+		List<ImagePlus> results = new ArrayList<>();
 		
 		// 	The ROI we need to haul around in case it's there
 		if(imp.getRoi() != null)
@@ -224,7 +221,7 @@ public class JACoP_B implements PlugIn {
 			if(hasRoiSets) roi = (Roi) rm.getRoi(r).clone(); 
 			
 			// Get some data on the ROI, is there one? Does it have a name?
-			String roiName = null;
+			String roiName;
 			if (roi != null) {
 				roiName = roi.getName();
 				if (roiName == null) {
@@ -388,7 +385,7 @@ public class JACoP_B implements PlugIn {
 		int columns = -1;
 		
 		// Get the images and make a montage
-		ArrayList<ImagePlus> imgs = new ArrayList<ImagePlus>();
+		ArrayList<ImagePlus> imgs = new ArrayList<>();
         
 		// Vertical montage
 		if(is_montage_vertical) {
@@ -592,7 +589,7 @@ public class JACoP_B implements PlugIn {
 		d.addNumericField("Channel_A", channelA, 0);
 		d.addNumericField("Channel_B", channelB, 0);
 		
-		List<String> thrs= new ArrayList<String>(Arrays.asList(Thresholder.methods));
+		List<String> thrs= new ArrayList<>(Arrays.asList(Thresholder.methods));
 		thrs.add("Costes Auto-Threshold");
 		thrs.add("Use Manual Threshold Below");
 		
@@ -763,7 +760,7 @@ public class JACoP_B implements PlugIn {
 		return true;
 	}
 
-	public static void main(String[] args) throws ScriptException, FileNotFoundException {
+	public static void main(String[] args) {
 		// set the plugins.dir property to make the plugin appear in the Plugins menu
 		Class<?> clazz = JACoP_B.class;
 		String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();

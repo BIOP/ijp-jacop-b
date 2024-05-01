@@ -131,11 +131,7 @@ public class RandomCostes {
             }
         }
 
-        /*double im1Avg = getMean(impCH1);
-        double im2Avg = getMean(impCH2);
-        double im3Avg = im1Avg+im2Avg;*/
-
-        double pearson = getPearson(impCH1, impCH2);//, im1Avg, im2Avg, im3Avg);
+        double pearson = getPearson(impCH1, impCH2);
 
         // Normal indexes
         ArrayList<Integer> blockIndexes = new ArrayList<>();
@@ -166,18 +162,13 @@ public class RandomCostes {
 
         ImagePlus impCH2Shuffled = IJ.createImage("Costes Block CH2 Shuffled", "32-bit black", squareSize, squareSize, nBlocks);
 
-        //im1Avg = getMean(impCH1);
-        //im2Avg = getMean(impCH2);
-        //im3Avg = im1Avg+im2Avg;
-
         for (int iShuffle=0;iShuffle<nShuffling;iShuffle++) {
             Collections.shuffle(blockIndexes);
             for (int iSlice=0;iSlice<nBlocks;iSlice++) {
                 impCH2Shuffled.getStack().setProcessor(impCH2.getStack().getProcessor(blockIndexes.get(iSlice)+1), iSlice+1);
             }
 
-            double value = getPearson(impCH1, impCH2Shuffled);//, im1Avg, im2Avg, im3Avg);
-            //System.out.println(value);
+            double value = getPearson(impCH1, impCH2Shuffled);
 
             if (value>pearson) {
                 nAbove=nAbove+1;
@@ -245,12 +236,11 @@ public class RandomCostes {
     public Plot getPearsonDistributionGraph(boolean userDefinedLimits, double userMin, double userMax) {
 
         double binRes = 0.25;
-        //double binSpacing = binRes*sd.getResult();
 
         int minBin = (int) (-6/binRes);
         int maxBin = (int) (+6/binRes);
 
-        if (pearsonNormalized == Double.NaN) {
+        if (Double.isNaN(pearsonNormalized)) {
         } else if (pearsonNormalized == Double.NEGATIVE_INFINITY) {
         } else if (pearsonNormalized == Double.POSITIVE_INFINITY) {
         } else if (pearsonNormalized>0) {
