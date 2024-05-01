@@ -24,6 +24,14 @@ package ch.epfl.biop.coloc.utils;
 import java.awt.Color;
 
 import ij.gui.Overlay;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.array.ArrayImg;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.type.numeric.integer.IntType;
+import sc.fiji.coloc.algorithms.AutoThresholdRegression;
+import sc.fiji.coloc.algorithms.Histogram2D;
+import sc.fiji.coloc.algorithms.MissingPreconditionException;
+import sc.fiji.coloc.algorithms.PearsonsCorrelation;
 import sc.fiji.coloc.algorithms.SpearmanRankCorrelation;
 
 /*  JACoP: "Just Another Colocalization Plugin..." v1, 13/02/06
@@ -67,6 +75,9 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
+import sc.fiji.coloc.gadgets.DataContainer;
+import sc.fiji.coloc.results.ResultHandler;
+import sc.fiji.coloc.results.Warning;
 
 /**
  *
@@ -88,8 +99,8 @@ public class ImageColocalizer {
     boolean doThat;
     double sumA, sumB, sumAB, sumsqrA, Aarraymean, Barraymean;
     
-    // OB: Add output for fluorogram ICQs and the likes to be separated from the actuall processing (avoid .show())
-    private Plot fluorogram_plot, icq_plot, costes_plot, cff_plot;
+    // OB: Add output for fluorogram ICQs and the likes to be separated from the actual processing (avoid .show())
+    private Plot fluorogram_plot, cff_plot;
     
     // OB: Add output for Costes Mask
     //private ImagePlus costesMask;
@@ -233,8 +244,9 @@ public class ImageColocalizer {
         rt.incrementCounter();
         rt.addValue("Image A", this.titleA);
         rt.addValue("Image B", this.titleB);
-        if (roi != null)
-        rt.addValue("ROI", roiName);
+        if (roi != null) {
+            rt.addValue("ROI", roiName);
+        }
      }
    
     public void Pearson() {
@@ -392,137 +404,76 @@ public class ImageColocalizer {
         rt.addValue("Thresholded M2", M2Thr);
     
     }
+
+    ResultHandler resultHandler = new ResultHandler() {
+        @Override
+        public void handleImage(RandomAccessibleInterval image, String name) {
+
+        }
+
+        @Override
+        public void handleHistogram(Histogram2D histogram, String name) {
+
+        }
+
+        @Override
+        public void handleWarning(Warning warning) {
+            IJ.log(warning.getShortMessage());
+        }
+
+        @Override
+        public void handleValue(String name, String value) {
+
+        }
+
+        @Override
+        public void handleValue(String name, double value) {
+
+        }
+
+        @Override
+        public void handleValue(String name, double value, int decimals) {
+
+        }
+
+        @Override
+        public void process() {
+
+        }
+    };
     
     public void CostesAutoThr() {
-        int CostesThrA=this.Amax;
-        int CostesThrB=this.Bmax;
-        double CostesSumAThr=0;
-        double CostesSumA=0;
-        double CostesSumBThr=0;
-        double CostesSumB=0;
-        double CostesPearson=1;
-        double [] rx= new double[this.Amax-this.Amin+1];
-        double [] ry= new double[this.Amax-this.Amin+1];
-        double rmax=0;
-        double rmin=1;
-        this.doThat=true;
-        int count=0;
-        
-        //First Step: define line equation
-        this.doThat=true;
-        double[] tmp=linreg(this.A, this.B, 0, 0);
-        double a=tmp[0];
-        double b=tmp[1];
-        double CoeffCorr=tmp[2];
-        this.doThat=false;
-        
-        int LoopMin= (int) Math.max(this.Amin, (this.Bmin-b)/a);
-        int LoopMax= (int) Math.min(this.Amax, (this.Bmax-b)/a);
-        
-        
-        //Minimize r of points below (thrA,a*thrA+b)
-        for (int i=LoopMax;i>=LoopMin;i--){
-            IJ.showStatus("Costes' threshold calculation in progress : "+(int)(100*(LoopMax-i)/(LoopMax-LoopMin))+"% done");
-            IJ.showProgress(LoopMax-i, LoopMax-LoopMin);
-            
-            if (IJ.escapePressed()) {
-                IJ.showStatus("Task canceled by user");
-                IJ.showProgress(2,1);
-                return;
-            }
-            
-            CostesPearson=linregCostes(this.A, this.B, i, (int) (a*i+b))[2];
-            
-            rx[count]=i;
-            ry[count]=CostesPearson;
-            if (((Double) CostesPearson).isNaN()){
-                if (count!=LoopMax){
-                    ry[count]=ry[count-1];
-                }else{
-                    ry[count]=1;
-                }
-            }
-            
-            if (CostesPearson<=rmin && i!=LoopMax){
-                CostesThrA=i;
-                CostesThrB=(int)(a*i+b);
-                //i=Amin-1;
-            }
-            
-            rmax=Math.max(rmax,ry[count]);
-            rmin=Math.min(rmin,ry[count]);
-            count++;
-            
-            
-        }
-        
-        
-        for (int i=0; i<this.length; i++){
-            CostesSumA+=this.A[i];
-            if (this.A[i]>CostesThrA) CostesSumAThr+=this.A[i];
-            CostesSumB+=this.B[i];
-            if (this.B[i]>CostesThrB) CostesSumBThr+=this.B[i];
-        }
-        
-        costes_plot=new Plot("Costes' threshold "+this.titleA+" and "+this.titleB,"ThrA", "Pearson's coefficient below",rx,ry);
-        costes_plot.setLimits(LoopMin, LoopMax, rmin, rmax);
-        costes_plot.setColor(Color.black);
-        costes_plot.draw();
-        
-        //Draw the zero line
-        double[] xline={CostesThrA, CostesThrA};
-        double[] yline={rmin, rmax};
-        costes_plot.setColor(Color.red);
-        costes_plot.addPoints(xline, yline, 2);
-        
-        // OB: Removed output so that we can display the plots programmatically 
-        //plot.show();
-        
-        // OB: Created local variable to be able to request the image as needed.
-        ImagePlus costesMask=NewImage.createRGBImage("Costes' mask",this.width,this.height,this.nbSlices,0);
-        costesMask.getProcessor().setValue(Math.pow(2, this.depth));
-        for (int k=1; k<=this.nbSlices; k++){
-        	costesMask.setSlice(k);
-            for (int j=0; j<this.height; j++){
-                for (int i=0; i<this.width; i++){
-                    int position=offset(i,j,k);
-                    int [] color=new int[3];
-                    color[0]=this.A[position];
-                    color[1]=this.B[position];
-                    color[2]=0;
-                    if (color[0]>CostesThrA && color[1]>CostesThrB){
-                        //CostesMask.getProcessor().setValue(((A[position]-CostesThrA)/(LoopMax-CostesThrA))*Math.pow(2, depthA));
-                        //CostesMask.getProcessor().drawPixel(i,j);
-                        for (int l=0; l<=2; l++) color[l]=255;
-                    }
-                    costesMask.getProcessor().putPixel(i,j,color);
-                }
-            }
-        }
-        costesMask.setCalibration(this.cal);
-        costesMask.setSlice(1);
-        
-        IJ.showStatus("");
-        IJ.showProgress(2,1);
-        
-        this.doThat=true;
-        
-        IJ.log("\nCostes' automatic threshold set to "+CostesThrA+" for imgA & "+CostesThrB+" for imgB");
-        IJ.log("Pearson's Coefficient:\nr="+round(linreg(this.A, this.B,CostesThrA,CostesThrB)[2],3)+" ("+round(CostesPearson,3)+" below thresholds)");
-        IJ.log("M1="+round(CostesSumAThr/CostesSumA,3)+" & M2="+round(CostesSumBThr/CostesSumB,3));
-        
-        // OB: Add Costes to results table 
-        rt.addValue("Threshold A", CostesThrA);
-        rt.addValue("Threshold B", CostesThrB);
-        
-        rt.addValue("Thresholded M1", CostesSumAThr/CostesSumA);
-        rt.addValue("Thresholded M2", CostesSumBThr/CostesSumB);
-        
-        // Seeing as it was set, set the thresholds here
-        this.thrA = CostesThrA;
-        this.thrB = CostesThrB;
+        // See https://imagej.net/media/costes-etalcoloc.pdf
+        // Coloc 2 implementation: https://github.com/fiji/Colocalisation_Analysis/blob/master/src/main/java/sc/fiji/coloc/algorithms/AutoThresholdRegression.java
 
-        setThresholds(thrA, thrB);
+        ArrayImg imgA = ArrayImgs.ints(A, A.length);
+        ArrayImg imgB = ArrayImgs.ints(B, B.length);
+        ArrayImg imgMask = ArrayImgs.ints(M, M.length);
+
+        int CostesThrA, CostesThrB;
+
+        try {
+            DataContainer<IntType> dc = new DataContainer<>(imgA, imgB, 0,1,"image A", "image B", imgMask, new long[]{0}, new long[] {M.length});
+            PearsonsCorrelation<?> pc = new PearsonsCorrelation<>();
+            AutoThresholdRegression ar = new AutoThresholdRegression<>(pc);
+            ar.execute(dc);
+            ar.processResults(resultHandler);
+            CostesThrA = (int) ar.getCh1MaxThreshold().getRealDouble();
+            CostesThrB = (int) ar.getCh2MaxThreshold().getRealDouble();
+            IJ.log("\nCostes' automatic threshold set to "+CostesThrA+" for imgA & "+CostesThrB+" for imgB");
+
+            rt.addValue("Threshold A", CostesThrA);
+            rt.addValue("Threshold B", CostesThrB);
+
+            // Seeing as it was set, set the thresholds here
+            this.thrA = CostesThrA;
+            this.thrB = CostesThrB;
+
+            setThresholds(thrA, thrB);
+
+        } catch (MissingPreconditionException e) {
+            throw new RuntimeException(e);
+        }
 
     }
     
@@ -1407,7 +1358,7 @@ public class ImageColocalizer {
         return coeff;
      }
     
-    public double[] linregCostes(int[] Aarray, int[] Barray, int TA, int TB){
+    public double[] linregCostes(int[] Aarray, int[] Barray, double TA, double TB){
          double num=0;
          double den1=0;
          double den2=0;
@@ -1618,14 +1569,6 @@ public class ImageColocalizer {
     	rt.show("Results");
     }
 
-	public Plot getICAPlot() {
-		return icq_plot;
-	}
-
-	public Plot getCostesPlot() {
-		return costes_plot;
-	}
-
 	public Plot getCFFPlot() {
 		return cff_plot;
 	}
@@ -1704,7 +1647,7 @@ public class ImageColocalizer {
 		
 		// Allow for thresholds to be either manual or automatic
 		if(thrMetA.matches("\\d*")) {
-			this.thrA = Integer.valueOf(thrMetA);
+			this.thrA = Integer.parseInt(thrMetA);
 			impA.getProcessor().setThreshold(this.thrA , impA.getProcessor().getMaxThreshold(), ImageProcessor.RED_LUT);
             impA.setRoi(roi);
 
@@ -1728,7 +1671,7 @@ public class ImageColocalizer {
 		// Allow for thresholds to be either manual or automatic
 		if(thrMetB.matches("\\d*")) {
 			//IJ.log("Threshold "+thrMetB+" matches regex");
-			this.thrB = Integer.valueOf(thrMetB);
+			this.thrB = Integer.parseInt(thrMetB);
 			impB.getProcessor().setThreshold(this.thrB , impB.getProcessor().getMaxThreshold(), ImageProcessor.RED_LUT);
             impB.setRoi(roi);
 			

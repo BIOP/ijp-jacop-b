@@ -49,6 +49,7 @@ package ch.epfl.biop.coloc;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,11 +60,9 @@ import ch.epfl.biop.coloc.utils.Utils;
 import ch.epfl.biop.montage.StackMontage;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.plugin.MontageMaker;
 import ij.plugin.PlugIn;
@@ -71,6 +70,9 @@ import ij.plugin.StackCombiner;
 import ij.plugin.Thresholder;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
+import net.imagej.ImageJ;
+
+import javax.script.ScriptException;
 
 public class JACoP_B implements PlugIn {
     
@@ -761,29 +763,25 @@ public class JACoP_B implements PlugIn {
 		return true;
 	}
 
-	public static void main(String[] args) {     
+	public static void main(String[] args) throws ScriptException, FileNotFoundException {
 		// set the plugins.dir property to make the plugin appear in the Plugins menu
 		Class<?> clazz = JACoP_B.class;
 		String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
 		String pluginsDir = url.substring("file:".length(), url.length() - clazz.getName().length() - ".class".length());
 		System.setProperty("plugins.dir", pluginsDir);
-		
-		ImageJ ij = new ImageJ();
-		ij.exitWhenQuitting(true);
-		
+
+		final ImageJ ij = new ImageJ();
+		ij.ui().showUI();
+
 		// Make some nice images
-	    // ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
-		ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
+		// ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
+		/*ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
 		int[] xpoints = {264,139,89,203,331,322,190};
 		int[] ypoints = {114,118,230,269,265,153,178};
-		imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));
-		imp.show();
+		imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));*/
 
-		// Allow to work within an IDE - IJ1 Style
-		JACoP_B jb = new JACoP_B();
-		jb.run("");
 
-		// Does not work directly within an IDE
-		//IJ.run("JACoP B", "");
+		//ij.script().run(new File("macro_pablo_ariel.ijm"),  true);
+
     }
 }
