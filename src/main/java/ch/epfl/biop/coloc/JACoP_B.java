@@ -52,6 +52,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import ij.Prefs;
 import ch.epfl.biop.coloc.utils.ImageColocalizer;
@@ -130,16 +132,28 @@ public class JACoP_B implements PlugIn {
 	boolean hide_masks;
 
 	float stroke_width = 2;
-	
+
+	// Output mode: "Show images", "Save images", or "Results only"
+	String outputMode = "Show images";
+
+	// Output directory for saving images
+	File outputDirectory = null;
+
 	@Override
 	public void run(String arg) {
 		nImages = WindowManager.getImageCount();
 		if (!mainDialog()) return;
-	
-		//Switch from folder to single image mode			
+
+		//Switch from folder to single image mode
 		//Setup the image and all settings
 
-		
+		// Handle folder batch mode: default output directory to image folder if not specified
+		if (this.imageFolder != null && outputMode.equals("Save images") &&
+		    (outputDirectory == null || !outputDirectory.exists())) {
+			outputDirectory = imageFolder;
+			IJ.log("Using image folder as output directory: " + outputDirectory.getAbsolutePath());
+		}
+
 		if (this.imageFolder != null) {
 			// Run coloc for a folder
 			String[] files = imageFolder.list();
@@ -357,11 +371,20 @@ public class JACoP_B implements PlugIn {
 			
 		} // END LOOP 1: ROIs
 		
-		
-		// Show all images
-	 	for(ImagePlus i : results) {
-	 		i.show();
-	 	}
+
+		// Handle output based on selected mode
+		if (outputMode.equals("Show images")) {
+			// Show all images (current behavior)
+			for(ImagePlus i : results) {
+				i.show();
+			}
+		} else if (outputMode.equals("Save images")) {
+			// Save all images
+			saveImages(results);
+		} else if (outputMode.equals("Results only")) {
+			// Do nothing - results table already shown
+			IJ.log("Images not displayed (Results only mode)");
+		}
 	}
 
 	/*
@@ -544,6 +567,94 @@ public class JACoP_B implements PlugIn {
 		return montage;
 	}
 
+	/**
+	 * Saves all result images to the specified output directory
+	 * Images are saved as TIFF files with descriptive names
+	 * Also saves the Results table as CSV
+	 *
+	 * @param images List of ImagePlus objects to save
+	 */
+	private void saveImages(List<ImagePlus> images) {
+		// Validate output directory
+		if (outputDirectory == null || !outputDirectory.exists()) {
+			IJ.error("Save Error", "Output directory does not exist: " +
+					(outputDirectory != null ? outputDirectory.getAbsolutePath() : "null"));
+			return;
+		}
+
+		if (!outputDirectory.isDirectory()) {
+			IJ.error("Save Error", "Output path is not a directory: " +
+					outputDirectory.getAbsolutePath());
+			return;
+		}
+
+		// Save each image
+		int imageCount = 0;
+		for (ImagePlus img : images) {
+			imageCount++;
+
+			// Generate filename: originalName_timestamp_number.tif
+			String baseFilename = sanitizeFilename(img.getTitle());
+			String filename = String.format("%s_%03d.tif",
+					baseFilename, imageCount);
+			String fullPath = new File(outputDirectory, filename).getAbsolutePath();
+
+			// Save as TIFF
+			try {
+				IJ.saveAs(img, "Tiff", fullPath);
+				IJ.log("Saved image: " + filename);
+			} catch (Exception e) {
+				IJ.error("Save Error", "Failed to save image " + filename + ": " + e.getMessage());
+			}
+		}
+
+		// Save Results table as CSV
+		saveResultsTable();
+
+		IJ.log("Save complete: " + imageCount + " images saved to " +
+				outputDirectory.getAbsolutePath());
+	}
+
+	/**
+	 * Sanitizes filename by removing invalid characters
+	 *
+	 * @param filename Original filename
+	 * @return Sanitized filename safe for file system
+	 */
+	private String sanitizeFilename(String filename) {
+		// Remove file extension if present
+		if (filename.lastIndexOf('.') > 0) {
+			filename = filename.substring(0, filename.lastIndexOf('.'));
+		}
+
+		// Replace invalid characters with underscore
+		return filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+	}
+
+	/**
+	 * Saves the Results table as a CSV file
+	 *
+	 */
+	private void saveResultsTable() {
+		ij.measure.ResultsTable rt = ij.measure.ResultsTable.getResultsTable();
+
+		if (rt == null || rt.getCounter() == 0) {
+			IJ.log("No results to save");
+			return;
+		}
+
+		// Generate CSV filename
+		String csvFilename = "JACoP_Results.csv";
+		String csvPath = new File(outputDirectory, csvFilename).getAbsolutePath();
+
+		try {
+			rt.save(csvPath);
+			IJ.log("Saved results table: " + csvFilename);
+		} catch (Exception e) {
+			IJ.error("Save Error", "Failed to save results table: " + e.getMessage());
+		}
+	}
+
 	private Boolean mainDialog() {
 		
 		// Pick up the data
@@ -581,6 +692,13 @@ public class JACoP_B implements PlugIn {
 		randCostesShuffleNumber = (int) Prefs.get(PREFIX+"randCostesShuffleNumber", 100);
 
 		use_advanced = Prefs.get(PREFIX+"use_advanced", false);
+
+		// Load output preferences
+		outputMode = Prefs.get(PREFIX+"outputMode", "Show images");
+		String savedOutputDir = Prefs.get(PREFIX+"outputDirectory", "");
+		if (!savedOutputDir.isEmpty()) {
+			outputDirectory = new File(savedOutputDir);
+		}
 
 		// Make the GUI, old school
 		GenericDialogPlus d = new GenericDialogPlus("Colocalization Parameters");
@@ -626,7 +744,16 @@ public class JACoP_B implements PlugIn {
         d.addNumericField("Costes_Block_Size (pixel)", randCostesBlockSize, 0);
         d.addNumericField("Costes_Number_Of_Shuffling", randCostesShuffleNumber, 0);
 		d.addCheckbox("Set Advanced Parameters", use_advanced);
-		
+
+		// Add output mode selection
+		d.addMessage("Output Options");
+		String[] outputModes = {"Show images", "Save images", "Results only"};
+		d.addRadioButtonGroup("Output_Mode", outputModes, 3, 1, outputMode);
+
+		// Add directory chooser for save mode
+		d.addDirectoryField("Save_Directory",
+			outputDirectory != null ? outputDirectory.getAbsolutePath() : "");
+
 		d.showDialog();
 		if(d.wasCanceled()) {
 			return false;
@@ -661,8 +788,17 @@ public class JACoP_B implements PlugIn {
         costesBlockSize = (int) d.getNextNumber();
         costesShufflingNumber = (int) d.getNextNumber();
 		use_advanced = d.getNextBoolean();
-		
-		
+
+		// Read output mode
+		outputMode = d.getNextRadioButton();
+
+		// Read output directory
+		String saveDirPath = d.getNextString();
+		if (!saveDirPath.isEmpty()) {
+			outputDirectory = new File(saveDirPath);
+		}
+
+
 		// Save the data
 		if( imageFolder != null) Prefs.set(PREFIX+"imagefolder", imageFolder.getAbsolutePath());
 		
@@ -699,8 +835,14 @@ public class JACoP_B implements PlugIn {
 		Prefs.set(PREFIX+"randCostesBlockSize", randCostesBlockSize);
 		Prefs.set(PREFIX+"randCostesShuffleNumber",randCostesShuffleNumber);
 
-		Prefs.set(PREFIX+"use_advanced", use_advanced);		
-		
+		Prefs.set(PREFIX+"use_advanced", use_advanced);
+
+		// Save output preferences
+		Prefs.set(PREFIX+"outputMode", outputMode);
+		if (outputDirectory != null) {
+			Prefs.set(PREFIX+"outputDirectory", outputDirectory.getAbsolutePath());
+		}
+
 		if(use_advanced) {
 			return advancedDialog();
 		}
@@ -772,10 +914,11 @@ public class JACoP_B implements PlugIn {
 
 		// Make some nice images
 		// ImagePlus imp = IJ.openImage("http://wsr.imagej.net/images/FluorescentCells.zip");
-		/*ImagePlus imp = IJ.openImage("http://imagej.nih.gov/ij/images/confocal-series.zip");
+		ImagePlus imp = IJ.openImage("https://imagej.net/ij/images/confocal-series.zip");
+        imp.show();
 		int[] xpoints = {264,139,89,203,331,322,190};
 		int[] ypoints = {114,118,230,269,265,153,178};
-		imp.setRoi(new PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));*/
+		imp.setRoi(new ij.gui.PolygonRoi(xpoints,ypoints,7,Roi.POLYGON));
 
 
 		//ij.script().run(new File("macro_pablo_ariel.ijm"),  true);

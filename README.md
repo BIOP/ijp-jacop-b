@@ -1,6 +1,9 @@
-[![Build Status](https://github.com/BIOP/ijp-jacop-b/actions/workflows/build.yml/badge.svg)](https://github.com/BIOP/ijp-jacop-b/actions/workflows/build.yml)
-
 # ijp-jacop-b
+
+[![Build Status](https://github.com/BIOP/ijp-jacop-b/actions/workflows/build.yml/badge.svg)](https://github.com/BIOP/ijp-jacop-b/actions/workflows/build.yml)
+[![Maven Scijava Version](https://img.shields.io/github/v/tag/BIOP/ijp-jacop-b?label=Version-[Maven%20Scijava])](https://maven.scijava.org/#browse/browse:releases:ch%2Fepfl%2Fbiop%2Fcoloc%2FJACoP_B)
+
+
 [Jacop by F. Cordelières](https://imagej.net/plugins/jacop) revamped by the BIOP
 
 An update to the JACoP Plugin that helps in the management of ROIs, Z sections and helps generate cleaner reports
