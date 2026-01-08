@@ -39,6 +39,10 @@ If you can't find any auto-threshold method that gives satisfying results, then 
 
 - Results Table
 - Output image with thresholded mask, fluorogram (optional), example randomized image.
+- The images can be:
+  - directly displayed
+  - saved into a folder
+  - ignored (only makes the results table)
 
 ![jacop output](https://github.com/BIOP/ijp-jacop-b/assets/20223054/a7ca4c93-18c2-42ee-9ba1-fb23d3037e3f)
 
